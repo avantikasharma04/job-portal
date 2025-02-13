@@ -36,6 +36,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "cff4bf14-95c6-490e-a9f5-c6ed3f263d33"
+      }
+    },
+    "owner": "avantika43"
   }
 }

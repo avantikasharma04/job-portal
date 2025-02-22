@@ -1,9 +1,14 @@
+require('dotenv').config();
+console.log('Google credentials path:', process.env.GOOGLE_APPLICATION_CREDENTIALS);
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = 3002;
+
+// Import routes
+const voiceRoutes = require('./routes/voiceRoutes');
 
 // Middleware
 app.use(cors());
@@ -15,21 +20,9 @@ app.get('/', (req, res) => {
     res.json({ message: "Welcome to the Job Portal API!" });
 });
 
-// Test route
-app.get('/test', (req, res) => {
-    res.json({ message: "Server is working!" });
-});
+// Use routes
+app.use('/api/voice', voiceRoutes);
 
-app.listen(PORT, (err) => {
-    if (err) {
-        console.error('Error starting server:', err);
-        return;
-    }
+app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-}).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.log(`Port ${PORT} is busy. Try a different port.`);
-    } else {
-        console.error('Server error:', err);
-    }
 });

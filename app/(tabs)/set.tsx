@@ -44,14 +44,14 @@ const SettingsScreen = ({ navigation }) => {
             right={() => (
               <Switch
                 value={voiceEnabled}
-                onValueChange={() => {
-                  setVoiceEnabled(!voiceEnabled);
-                  speakText(voiceEnabled ? 'Voice assistant disabled' : 'Voice assistant enabled');
+                onValueChange={(value) => {
+                  setVoiceEnabled(value);
+                  speakText(value ? 'Voice assistant enabled' : 'Voice assistant disabled');
                 }}
               />
             )}
           />
-          <Divider />
+          <Divider style={styles.divider} />
 
           {/* Notifications */}
           <List.Item
@@ -61,11 +61,14 @@ const SettingsScreen = ({ navigation }) => {
             right={() => (
               <Switch
                 value={notifications}
-                onValueChange={() => setNotifications(!notifications)}
+                onValueChange={(value) => {
+                  setNotifications(value);
+                  speakText(value ? 'Notifications enabled' : 'Notifications disabled');
+                }}
               />
             )}
           />
-          <Divider />
+          <Divider style={styles.divider} />
 
           {/* Language Selection */}
           <List.Item
@@ -73,6 +76,7 @@ const SettingsScreen = ({ navigation }) => {
             description={`Current: ${selectedLanguage === 'english' ? 'English' : 'Hindi'}`}
             left={() => <List.Icon icon="translate" />}
             onPress={() => setLanguageDialog(true)}
+            style={styles.listItem}
           />
         </List.Section>
 
@@ -102,7 +106,7 @@ const SettingsScreen = ({ navigation }) => {
                 onValueChange={(value) => {
                   setSelectedLanguage(value);
                   setLanguageDialog(false);
-                  speakText(`Language changed to ${value}`);
+                  speakText(`Language changed to ${value === 'english' ? 'English' : 'Hindi'}`);
                 }}
                 value={selectedLanguage}
               >
@@ -120,23 +124,34 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#E3F2FD', // Light blue background
   },
   header: {
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0D47A1', // Dark blue
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color:'#0070e8',
+    color: '#FFFFFF', // White text
   },
   helpButton: {
     padding: 16,
     marginTop: 20,
+    alignSelf: 'center',
+    backgroundColor: '#1976D2', // Medium blue
+    borderRadius: 8,
   },
-  
- 
+  listItem: {
+    backgroundColor: '#BBDEFB', // Light blue
+    marginVertical: 4,
+    borderRadius: 8,
+    padding: 10,
+  },
+  divider: {
+    backgroundColor: '#64B5F6', // Medium blue for subtle contrast
+    height: 1,
+  },
 });
 
 export default SettingsScreen;

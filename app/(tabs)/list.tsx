@@ -8,11 +8,21 @@ import JobPortalForm from './form';
 type RootStackParamList = {
   ListPage: undefined;
   JobDetails: { job: any };
+  JobPortalForm: { job: JobType };
 };
 
 type ListPageProps = {
   navigation: StackNavigationProp<RootStackParamList, 'ListPage'>;
   route: RouteProp<RootStackParamList, 'ListPage'>;
+};
+
+type JobType = {
+  id: number;
+  title: string;
+  location: string;
+  salary: string;
+  type: string;
+  requirements: string;
 };
 
 const jobCategories = [
@@ -184,9 +194,13 @@ const ListPage = ({ navigation }: ListPageProps) => {
                 <Text style={styles.listText}>{item.salary}</Text>
               </View>
 
-              <Button mode="contained" onPress={() => navigation.navigate('JobPortalForm', { job: item })} style={styles.applyButton}>
-                Apply Now
-              </Button>
+              <Button 
+  mode="contained" 
+  onPress={() => navigation.navigate('JobPortalForm', { job: item })} 
+  style={styles.applyButton}
+>
+  Apply Now
+</Button>
             </Card.Content>
           </Card>
         )}
@@ -217,13 +231,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   categoriesContainer: {
-    padding: 10,
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
     marginBottom: 10,
   },
   categoryChip: {
     marginRight: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
     backgroundColor: '#64B5F6', // Medium Blue for Chips
+    borderRadius: 20,
+    alignSelf: 'center',
   },
+  
   jobCard: {
     marginHorizontal: 10,
     marginBottom: 10,

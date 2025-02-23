@@ -196,23 +196,25 @@ const ListPage = ({ navigation }: ListPageProps) => {
 };
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#E3F2FD', // Light Blue Background
     paddingBottom: 10,
   },
   navbar: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#0D47A1', // Dark Blue Navbar
   },
   navbarTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'white',
   },
   searchbar: {
     marginHorizontal: 10,
     marginVertical: 10,
     elevation: 2,
+    backgroundColor: '#BBDEFB', // Lighter Blue for Searchbar
+    borderRadius: 8,
   },
   categoriesContainer: {
     padding: 10,
@@ -220,14 +222,19 @@ const styles = StyleSheet.create({
   },
   categoryChip: {
     marginRight: 8,
+    backgroundColor: '#64B5F6', // Medium Blue for Chips
   },
   jobCard: {
     marginHorizontal: 10,
     marginBottom: 10,
     elevation: 2,
+    backgroundColor: '#90CAF9', // Light Blue for Cards
+    borderRadius: 10,
+    padding: 10,
   },
   applyButton: {
     marginTop: 10,
+    backgroundColor: '#1565C0', // Deep Blue for Button
   },
   listItem: {
     flexDirection: 'row',
@@ -237,8 +244,8 @@ const styles = StyleSheet.create({
   listText: {
     fontSize: 16,
     marginLeft: 10,
+    color: '#0D47A1', // Dark Blue Text
+    fontWeight: '500',
   },
-
 });
-
 export default ListPage;

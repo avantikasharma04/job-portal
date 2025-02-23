@@ -81,4 +81,24 @@ class SpeechService {
   }
 }
 
+const textToSpeech = require('@google-cloud/text-to-speech');
+const fs = require('fs');
+const util = require('util');
+
+const ttsClient = new textToSpeech.TextToSpeechClient();
+
+const synthesizeSpeech = async (text, languageCode) => {
+    const request = {
+        input: { text },
+        voice: { languageCode, ssmlGender: 'NEUTRAL' },
+        audioConfig: { audioEncoding: 'MP3' },
+    };
+
+    const [response] = await ttsClient.synthesizeSpeech(request);
+    return response.audioContent;
+};
+
+module.exports = { synthesizeSpeech };
+
+
 module.exports = new SpeechService();

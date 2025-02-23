@@ -3,6 +3,9 @@ import { View, ScrollView, Text, Image, TextInput, StyleSheet, Dimensions,Button
 import { Appbar, Card, BottomNavigation, IconButton, Surface, List } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
+import ListPage from './list';
+import Profile from './profile';
+import SettingsScreen from './set';
 
 const { width } = Dimensions.get('window');
 
@@ -75,6 +78,7 @@ const HomeContent = () => {
             style={styles.searchInput}
             placeholderTextColor="#666"
           />
+          <IconButton icon="microphone" size={24} color="#0d47a1"  />
         </Surface>
       </View>
 

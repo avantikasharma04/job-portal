@@ -4,6 +4,9 @@ import { Appbar, Card, Title, Button, Searchbar, Chip, List, IconButton } from '
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import JobPortalForm from './form';
+import { createStackNavigator } from "@react-navigation/stack"
+
+const Stack = createStackNavigator();
 
 type RootStackParamList = {
   ListPage: undefined;
@@ -195,12 +198,12 @@ const ListPage = ({ navigation }: ListPageProps) => {
               </View>
 
               <Button 
-  mode="contained" 
-  onPress={() => navigation.navigate('JobPortalForm', { job: item })} 
-  style={styles.applyButton}
->
-  Apply Now
-</Button>
+                mode="contained" 
+                onPress={() => navigation.navigate('JobPortalForm', { job: item })} 
+                style={styles.applyButton}
+              >
+                Apply Now
+              </Button>
             </Card.Content>
           </Card>
         )}
@@ -269,4 +272,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-export default ListPage;
+const ListScreen = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="ListPage" component={ListPage} options={{ headerShown: false }} />
+      <Stack.Screen name="JobPortalForm" component={JobPortalForm} />
+    </Stack.Navigator>
+  );
+};
+export default ListScreen;

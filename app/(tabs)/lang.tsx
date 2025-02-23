@@ -2,8 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Mic, AlertCircle, User, Phone, MapPin, Volume2 } from "lucide-react";
 import * as Speech from "expo-speech";
+import { createStackNavigator } from "@react-navigation/stack"
+import HomeScreen from "./home";
+import { useNavigation } from "expo-router";
+
+const Stack = createStackNavigator();
 
 const OnboardingFlow = () => {
+  const navigation=useNavigation()
   const [step, setStep] = useState("language"); // language -> details -> job
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [userData, setUserData] = useState({
@@ -225,18 +231,23 @@ const OnboardingFlow = () => {
             style={styles.confirmButton}
             onPress={() => {
               // Handle final submission
-              console.log("Final submission:", {
+              console.log ("Final submission:", {
                 language: selectedLanguage,
                 userData,
                 selectedJob
-              });
+              }
+            );
+            navigation.navigate('HomeScreen')
             }}
+            
           >
+            
             <Text style={styles.buttonText}>{getText('finish')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.rejectButton}
-            onPress={() => setSelectedJob(null)}
+           onPress={() => setSelectedJob(null)}
+          
           >
             <Text style={styles.buttonText}>{getText('no')}</Text>
           </TouchableOpacity>
@@ -406,4 +417,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OnboardingFlow;
+const HomeScreen1 = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="OnboardingFlow" component={OnboardingFlow} options={{ headerShown: false }} />
+      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+    </Stack.Navigator>
+  );
+};
+
+export default HomeScreen1;

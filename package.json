@@ -44,6 +44,8 @@
     "expo-web-browser": "~14.0.2",
     "express": "^4.21.2",
     "job-portal": "file:",
+    "lucide-react": "^0.475.0",
+    "lucide-react-native": "^0.475.0",
     "multer": "^1.4.5-lts.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",

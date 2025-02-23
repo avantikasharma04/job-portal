@@ -123,11 +123,20 @@ const ListPage = ({ navigation }: ListPageProps) => {
       </Appbar.Header>
 
       <Searchbar
-        placeholder="Search jobs..."
-        onChangeText={handleSearch}
-        value={searchQuery}
-        style={styles.searchbar}
-      />
+  placeholder="Search jobs..."
+  onChangeText={handleSearch}
+  value={searchQuery}
+  style={styles.searchbar}
+  right={(props) => (
+    <IconButton
+      {...props}
+      icon="microphone"
+      onPress={() => {
+        console.log('Microphone pressed');
+      }}
+    />
+  )}
+/>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
         {jobCategories.map((category) => (

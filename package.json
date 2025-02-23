@@ -46,7 +46,11 @@
     "expo-system-ui": "~4.0.8",
     "expo-web-browser": "~14.0.2",
     "express": "^4.21.2",
+
+    "firebase": "^11.3.1",
+
     "jest-expo": "~52.0.5",
+
     "job-portal": "file:",
     "lucide-react": "^0.475.0",
     "lucide-react-native": "^0.475.0",

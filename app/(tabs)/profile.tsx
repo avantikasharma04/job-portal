@@ -8,8 +8,6 @@ export default function Profile() {
     name: 'John Doe',
     phone: '+91 9876543210',
     address: 'Mumbai, Maharashtra',
-    experience: '5 years',
-    skills: 'Cooking, Cleaning, Child Care',
     languages: 'Hindi, English, Marathi',
     availability: 'Full Time',
     expectedSalary: '₹15,000/month',
@@ -59,20 +57,7 @@ export default function Profile() {
           disabled={!isEditing}
           style={styles.input}
         />
-         <TextInput
-          label="experience"
-          value={profileData.experience}
-          onChangeText={(text) => handleInputChange('experience', text)}
-          disabled={!isEditing}
-          style={styles.input}
-        />
-         <TextInput
-          label="skills"
-          value={profileData.skills}
-          onChangeText={(text) => handleInputChange('skills', text)}
-          disabled={!isEditing}
-          style={styles.input}
-        />
+       
          <TextInput
           label="languages"
           value={profileData.languages}

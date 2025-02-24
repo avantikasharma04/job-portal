@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { Avatar, TextInput, Button, Title } from 'react-native-paper';
+import job from './job';
+import { createStackNavigator } from "@react-navigation/stack"
+import { useNavigation } from 'expo-router';
 
-export default function Profile() {
+const Stack = createStackNavigator();
+
+
+const emp= ()=> {
+    const navigation=useNavigation()
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: 'Radhika Jain',
@@ -79,6 +86,15 @@ export default function Profile() {
         {isEditing ? 'Save' : 'Edit'}
       </Button>
 
+
+      <Button 
+          mode="contained" 
+          onPress={() => navigation.navigate('job')} 
+          style={styles.button}
+        >
+          Post job
+        </Button>
+
       
     </ScrollView>
   );
@@ -92,3 +108,14 @@ const styles = StyleSheet.create({
   input: { marginBottom: 10 },
   button: { marginTop: 16 },
 });
+
+const Profile1 = () => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="emp" component={emp} options={{ headerShown: false }} />
+        <Stack.Screen name="job" component={job} />
+      </Stack.Navigator>
+    );
+  };
+   export default Profile1;
+  

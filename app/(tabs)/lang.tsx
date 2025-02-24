@@ -5,6 +5,7 @@ import * as Speech from "expo-speech";
 import { createStackNavigator } from "@react-navigation/stack"
 import HomeScreen from "./home";
 import { useNavigation } from "expo-router";
+import SignupScreen from "./signup";
 
 const Stack = createStackNavigator();
 
@@ -157,6 +158,7 @@ const OnboardingFlow = () => {
   );
 
   const renderUserDetails = () => (
+
     <View>
       <Text style={styles.title}>{getText("aboutYourself")}</Text>
 
@@ -224,7 +226,16 @@ const OnboardingFlow = () => {
           styles.continueButton,
           !userData.userType && styles.disabledButton
         ]} 
-        onPress={() => userData.userType && setStep("job")}
+        onPress={()=>
+          {if (userData.userType === "employer") {
+            navigation.navigate("SignupScreen"); // Navigate to employer screen
+          } else if (userData.userType === "employee") {
+            setStep("job"); // Navigate to employee screen
+          } else {
+            alert("Please select a user type first!");
+          }}
+        }
+        //onPress={() => userData.userType && setStep("job")}
       >
         <Text style={styles.continueText}>{getText("continue")}</Text>
       </TouchableOpacity>
@@ -503,8 +514,11 @@ const HomeScreen1 = () => {
     <Stack.Navigator>
       <Stack.Screen name="OnboardingFlow" component={OnboardingFlow} options={{ headerShown: false }} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="SignupScreen" component={SignupScreen} />
     </Stack.Navigator>
   );
 };
+
+
 
 export default HomeScreen1;

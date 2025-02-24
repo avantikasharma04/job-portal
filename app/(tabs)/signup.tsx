@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { TextInput, Button, Text, RadioButton, Checkbox, Surface, Provider as PaperProvider } from "react-native-paper";
+import { createStackNavigator } from "@react-navigation/stack"
+import { useNavigation } from 'expo-router';
+import AuthScreen from './login';
+
+const Stack = createStackNavigator();
+
 
 const SignupScreen = () => {
+  const navigation=useNavigation()
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -123,7 +131,7 @@ const SignupScreen = () => {
             </Text>
           </View>
 
-          <Button mode="contained" onPress={handleSignup} style={styles.button}>
+          <Button mode="contained" onPress={() => navigation.navigate('AuthScreen')} style={styles.button}>
             Sign Up
           </Button>
 
@@ -192,4 +200,15 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SignupScreen;
+const Signup1 = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="SignupScreen" component={SignupScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AuthScreen" component={AuthScreen} />
+    </Stack.Navigator>
+  );
+};
+
+export default Signup1;
+
+

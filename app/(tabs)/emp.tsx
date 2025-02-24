@@ -5,12 +5,12 @@ import { Avatar, TextInput, Button, Title } from 'react-native-paper';
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: 'John Doe',
+    name: 'Radhika Jain',
     phone: '+91 9876543210',
     address: 'Mumbai, Maharashtra',
     languages: 'Hindi, English, Marathi',
     availability: 'Full Time',
-    expectedSalary: '₹15,000/month',
+  
   });
 
   const handleInputChange = (key, value) => {
@@ -27,10 +27,10 @@ export default function Profile() {
         
       <View style={styles.header}>
       <View style={styles.header}>
-          <text>Employee Profile</text>
+          <text>Employer Profile</text>
         </View>
           
-        <Avatar.Image size={80}  source={{ uri: 'https://img.freepik.com/free-photo/professional-cleaning-service-person-using-vacuum-cleaner-office_23-2150520594.jpg?semt=ais_hybrid' }} 
+        <Avatar.Image size={80}  source={{ uri: 'https://info.recruitics.com/hubfs/Employer_profile_pt_1.jpg' }} 
             />
         <Title>{profileData.name}</Title>
       </View>
@@ -72,13 +72,7 @@ export default function Profile() {
           disabled={!isEditing}
           style={styles.input}
         />
-         <TextInput
-          label="expectedSalary"
-          value={profileData.expectedSalary}
-          onChangeText={(text) => handleInputChange('expectedSalary', text)}
-          disabled={!isEditing}
-          style={styles.input}
-        />
+         
       </View>
 
       <Button mode="contained" onPress={() => setIsEditing(!isEditing)} style={styles.button}>

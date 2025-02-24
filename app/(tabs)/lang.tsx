@@ -9,13 +9,14 @@ import { useNavigation } from "expo-router";
 const Stack = createStackNavigator();
 
 const OnboardingFlow = () => {
-  const navigation=useNavigation()
-  const [step, setStep] = useState("language"); // language -> details -> job
+  const navigation = useNavigation()
+  const [step, setStep] = useState("language");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [userData, setUserData] = useState({
     name: "",
     phone: "",
     location: "",
+    userType: "",
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [isListening, setIsListening] = useState(false);
@@ -31,6 +32,11 @@ const OnboardingFlow = () => {
       speakPhone: "Tap mic to speak your phone number",
       location: "Location",
       speakLocation: "Tap mic to speak your location",
+      job: "Job",
+      job1: "Are you an employer or employee?",
+      userTypeQuestion: "Are you an employer or employee?",
+      employer: "Employer",
+      employee: "Employee",
       continue: "Continue",
       selectJob: "Select Your Preferred Job",
       jobInstruction: "Tap the microphone and speak the job you want",
@@ -51,6 +57,11 @@ const OnboardingFlow = () => {
       speakPhone: "अपना फ़ोन नंबर बोलने के लिए माइक पर टैप करें",
       location: "स्थान",
       speakLocation: "अपना स्थान बोलने के लिए माइक पर टैप करें",
+      job: "नौकरी",
+      job1: "क्या आप एक नियोक्ता या कर्मचारी हैं?",
+      userTypeQuestion: "क्या आप एक नियोक्ता या कर्मचारी हैं?",
+      employer: "नियोक्ता",
+      employee: "कर्मचारी",
       continue: "जारी रखें",
       selectJob: "अपनी पसंदीदा नौकरी चुनें",
       jobInstruction: "माइक पर टैप करें और बताएं आप कौन सी नौकरी करना चाहते हैं",
@@ -103,7 +114,6 @@ const OnboardingFlow = () => {
 
   const handleVoiceInput = (field) => {
     setIsListening(true);
-    // Simulate voice input (replace with actual voice recognition logic)
     setTimeout(() => {
       setIsListening(false);
       if (field === 'job') {
@@ -111,7 +121,7 @@ const OnboardingFlow = () => {
       } else {
         setUserData(prev => ({
           ...prev,
-          [field]: `Sample ${field}` // Replace with actual voice input
+          [field]: `Sample ${field}`
         }));
       }
     }, 2000);
@@ -174,9 +184,47 @@ const OnboardingFlow = () => {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.userTypeContainer}>
+        <Text style={styles.userTypeTitle}>{getText("userTypeQuestion")}</Text>
+        <View style={styles.userTypeButtons}>
+          <TouchableOpacity
+            style={[
+              styles.userTypeButton,
+              userData.userType === "employer" && styles.selectedUserType
+            ]}
+            onPress={() => setUserData(prev => ({ ...prev, userType: "employer" }))}
+          >
+            <Text style={[
+              styles.userTypeText,
+              userData.userType === "employer" && styles.selectedUserTypeText
+            ]}>
+              {getText("employer")}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.userTypeButton,
+              userData.userType === "employee" && styles.selectedUserType
+            ]}
+            onPress={() => setUserData(prev => ({ ...prev, userType: "employee" }))}
+          >
+            <Text style={[
+              styles.userTypeText,
+              userData.userType === "employee" && styles.selectedUserTypeText
+            ]}>
+              {getText("employee")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TouchableOpacity 
-        style={styles.continueButton} 
-        onPress={() => setStep("job")}
+        style={[
+          styles.continueButton,
+          !userData.userType && styles.disabledButton
+        ]} 
+        onPress={() => userData.userType && setStep("job")}
       >
         <Text style={styles.continueText}>{getText("continue")}</Text>
       </TouchableOpacity>
@@ -230,24 +278,19 @@ const OnboardingFlow = () => {
           <TouchableOpacity 
             style={styles.confirmButton}
             onPress={() => {
-              // Handle final submission
-              console.log ("Final submission:", {
+              console.log("Final submission:", {
                 language: selectedLanguage,
                 userData,
                 selectedJob
-              }
-            );
-            navigation.navigate('HomeScreen')
+              });
+              navigation.navigate('HomeScreen')
             }}
-            
           >
-            
             <Text style={styles.buttonText}>{getText('finish')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.rejectButton}
-           onPress={() => setSelectedJob(null)}
-          
+            onPress={() => setSelectedJob(null)}
           >
             <Text style={styles.buttonText}>{getText('no')}</Text>
           </TouchableOpacity>
@@ -322,6 +365,44 @@ const styles = StyleSheet.create({
     color: "#666",
     marginLeft: 10,
   },
+  userTypeContainer: {
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  userTypeTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  userTypeButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  userTypeButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+  },
+  selectedUserType: {
+    backgroundColor: "#007bff",
+    borderColor: "#007bff",
+  },
+  userTypeText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  selectedUserTypeText: {
+    color: "#fff",
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+
   continueButton: {
     backgroundColor: "#007bff",
     padding: 15,

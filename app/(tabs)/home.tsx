@@ -3,12 +3,11 @@ import { View, ScrollView, Text, Image, TextInput, StyleSheet, Dimensions,Button
 import { Appbar, Card, BottomNavigation, IconButton, Surface, List } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import ListPage from './list';
+import ListPage from './list'
 import Profile from './profile';
 import SettingsScreen from './set';
 
 const { width } = Dimensions.get('window');
-
 
 const HomeScreen = () => {
   const [index, setIndex] = React.useState(0);
@@ -20,10 +19,10 @@ const HomeScreen = () => {
   ]);
 
   const renderScene = BottomNavigation.SceneMap({
-    home: () => <HomeContent />,
-    jobs: () => < ListPage />,
-    profile: () => < Profile/>,
-    more: () => <SettingsScreen />,
+    home: () => <HomeContent />, 
+    jobs: () => < ListPage />, 
+    profile: () => < Profile/>, 
+    more: () => <SettingsScreen />, 
   });
 
   return (
@@ -64,8 +63,8 @@ const HomeContent = () => {
   const successStories = [
     { name: 'Sarita Shetty', role: 'Toddler nanny', company: 'working for 2+ years with us' },
     { name: 'Neelam Pandey', role: 'Part-Time Cook', company: 'Working for 4+ years' },
-    { name: 'Neelam Pandey', role: 'Part-Time Cook', company: 'Working for 4+ years' },
-    { name: 'Neelam Pandey', role: 'Part-Time Cook', company: 'Working for 4+ years' },
+    { name: 'Ashish Bhagat', role: 'Gardener', company: 'Working for 1+ years' },
+    { name: 'Ravi dube', role: 'Mathematics teacher', company: 'Working for 4+ years' },
   ];
 
   return (
@@ -78,7 +77,7 @@ const HomeContent = () => {
             style={styles.searchInput}
             placeholderTextColor="#666"
           />
-          <IconButton icon="microphone" size={24} color="#0d47a1"  />
+          <IconButton icon="microphone" size={24} color="#ffffff"/>
         </Surface>
       </View>
 
@@ -118,7 +117,10 @@ const HomeContent = () => {
             <Card key={index} style={styles.successCard}>
               <Card.Content>
                 <View style={styles.avatarContainer}>
-                  <View style={styles.avatar} />
+                  <Image 
+                    source={{ uri: 'https://housebeautiful.cdnds.net/17/39/2048x1024/landscape-1506429633-woman-cleaning-oven.jpg' }} 
+                    style={styles.avatar} 
+                  />
                 </View>
                 <Text style={styles.storyName}>{story.name}</Text>
                 <Text style={styles.storyRole}>{story.role}</Text>
@@ -186,16 +188,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bannerTitle: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#0070e8',
     textAlign: 'center',
   },
   bannerSubtitle: {
     fontSize: 24,
-    color: '#0064cf',
+    color: '#55B0FF',
     opacity: 0.9,
     margin: 8,
+    alignSelf:'center',
   },
   bannerImage: {
     width:  500,

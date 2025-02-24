@@ -2,9 +2,17 @@ import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { TextInput, Button, Text, Menu, Divider, Provider as PaperProvider, Surface } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
-import HomeScreen from './home';
+
+import { useNavigation } from 'expo-router';
+import SignupScreen from "./signup";
+import HomeScreen from "./home";
+import { createStackNavigator } from "@react-navigation/stack"
+
+const Stack = createStackNavigator();
 
 const AuthScreen = () => {
+  const navigation=useNavigation()
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -86,11 +94,11 @@ const AuthScreen = () => {
             <Menu.Item onPress={() => setRole("Employer")} title="Employer" />
           </Menu>
 
-          <Button mode="contained" onPress={HomeScreen} style={styles.button}>
+          <Button mode="contained"  onPress={() => navigation.navigate('HomeScreen')}  style={styles.button}>
             Sign Up
           </Button>
           <Button mode="text" onPress={handleLogin} style={styles.button}>
-            Already have an account? Login
+            Don't have an account? Sign Up
           </Button>
 
           {message ? <Text style={styles.successText}>{message}</Text> : null}
@@ -143,5 +151,15 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AuthScreen;
+const Login1 = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="AuthScreen" component={AuthScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+    </Stack.Navigator>
+  );
+};
+
+
+export default Login1;
 

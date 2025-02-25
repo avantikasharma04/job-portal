@@ -2,6 +2,7 @@
   "name": "job-portal",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -46,11 +47,9 @@
     "expo-system-ui": "~4.0.8",
     "expo-web-browser": "~14.0.2",
     "express": "^4.21.2",
-
     "firebase": "^11.3.1",
-
+    "firebase-admin": "^13.1.0",
     "jest-expo": "~52.0.5",
-
     "job-portal": "file:",
     "lucide-react": "^0.475.0",
     "lucide-react-native": "^0.475.0",
@@ -80,5 +79,20 @@
     "react-test-renderer": "18.3.1",
     "typescript": "^5.3.3"
   },
-  "private": true
+  "private": true,
+  "description": "This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avantikasharma04/job-portal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/avantikasharma04/job-portal/issues"
+  },
+  "homepage": "https://github.com/avantikasharma04/job-portal#readme"
 }

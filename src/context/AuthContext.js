@@ -1,8 +1,12 @@
-import React, { createContext, useState, useEffect } from "react";
-import { auth } from "../services/firebaseConfig";
-import { signup, login, logout } from "../services/auth";
-import { saveUserProfile, getUserProfile } from "../services/database";
-import { onAuthStateChanged } from "firebase/auth";
+import { createContext, useState, useEffect } from "react";
+import { auth, db } from "../services/firebaseConfig";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export const AuthContext = createContext();
 
@@ -11,55 +15,73 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userProfile = await getUserProfile(firebaseUser.uid);
-        setUser({ ...firebaseUser, ...userProfile });
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        setUser(userDoc.exists() ? { ...currentUser, ...userDoc.data() } : currentUser);
       } else {
         setUser(null);
       }
       setLoading(false);
     });
-
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
-  // Function to register a new user (Employer or Job Seeker)
-  const registerUser = async (email, password, name, phone, role) => {
+  // ✅ User Signup Function
+  const signUp = async (email, password, name, phone, role) => {
     try {
-      const user = await signup(email, password);
-      await saveUserProfile(user.uid, { name, email, phone, role, createdAt: new Date() });
-      setUser(user);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // ✅ Store user in Firestore (common "users" collection)
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        name,
+        email,
+        phone,
+        role,
+        createdAt: new Date(),
+      });
+
+      // ✅ Store in role-specific collection
+      if (role === "employer") {
+        await setDoc(doc(db, "employerProfile", user.uid), { name, email, phone });
+      } else {
+        await setDoc(doc(db, "jobSeekerProfile", user.uid), { name, email, phone });
+      }
+
+      console.log("✅ User signed up and stored in Firestore.");
       return user;
     } catch (error) {
-      console.error("Registration Error:", error.message);
+      console.error("❌ Signup error:", error.message);
       throw error;
     }
   };
 
-  const loginUser = async (email, password) => {
+  // ✅ User Login Function
+  const signIn = async (email, password) => {
     try {
-      const user = await login(email, password);
-      setUser(user);
-      return user;
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log("✅ User logged in.");
     } catch (error) {
-      console.error("Login Error:", error.message);
+      console.error("❌ Login error:", error.message);
       throw error;
     }
   };
 
-  const logoutUser = async () => {
+  // ✅ User Logout Function
+  const logOut = async () => {
     try {
-      await logout();
+      await signOut(auth);
       setUser(null);
+      console.log("✅ User logged out.");
     } catch (error) {
-      console.error("Logout Error:", error.message);
-      throw error;
+      console.error("❌ Logout error:", error.message);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, registerUser, loginUser, logoutUser }}>
+    <AuthContext.Provider value={{ user, signUp, signIn, logOut, loading }}>
       {children}
     </AuthContext.Provider>
   );

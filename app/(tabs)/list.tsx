@@ -263,6 +263,70 @@ const styles = StyleSheet.create({
   },
 });
 
+
+
+// React Web component for job listing preview
+const JobListingPreview = () => {
+  return (
+    <div className="bg-blue-50 p-4 min-h-screen">
+      {/* Active Job Card */}
+      <div className="bg-blue-200 rounded-lg p-4 mb-4 shadow">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-blue-900 text-xl font-bold">Cook Needed</h2>
+        </div>
+        <div className="flex items-center mb-2">
+          <span className="text-blue-900 mr-2">📍</span>
+          <span className="text-blue-900">Bandra East</span>
+        </div>
+        <div className="flex items-center mb-2">
+          <span className="text-blue-900 mr-2">⏰</span>
+          <span className="text-blue-900">Part Time</span>
+        </div>
+        <div className="flex items-center mb-2">
+          <span className="text-blue-900 mr-2">⭐</span>
+          <span className="text-blue-900">Veg & Non-veg cooking, 3 years experience</span>
+        </div>
+        <div className="flex items-center mb-4">
+          <span className="text-blue-900 mr-2">₹</span>
+          <span className="text-blue-900">18,000/month</span>
+        </div>
+        <button className="bg-blue-800 text-white px-4 py-2 rounded-lg w-full">
+          Apply Now
+        </button>
+      </div>
+      {/* Filled Position Card */}
+      <div className="bg-gray-300 rounded-lg p-4 shadow opacity-80">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-gray-700 text-xl font-bold">Maid Required</h2>
+          <span className="bg-gray-600 text-white px-2 py-1 rounded-full text-sm">
+            Position Filled
+          </span>
+        </div>
+        <div className="flex items-center mb-2">
+          <span className="text-gray-600 mr-2">📍</span>
+          <span className="text-gray-600">Andheri West</span>
+        </div>
+        <div className="flex items-center mb-2">
+          <span className="text-gray-600 mr-2">⏰</span>
+          <span className="text-gray-600">Full Time</span>
+        </div>
+        <div className="flex items-center mb-2">
+          <span className="text-gray-600 mr-2">⭐</span>
+          <span className="text-gray-600">Cooking, Cleaning, 2 years experience</span>
+        </div>
+        <div className="flex items-center mb-4">
+          <span className="text-gray-600 mr-2">₹</span>
+          <span className="text-gray-600">15,000/month</span>
+        </div>
+        <button className="bg-gray-600 text-white px-4 py-2 rounded-lg w-full opacity-70" disabled>
+          Position Filled
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
 const ListScreen = () => {
   return (
     <Stack.Navigator>
@@ -271,5 +335,8 @@ const ListScreen = () => {
     </Stack.Navigator>
   );
 };
+
+
+export { JobListingPreview };
 
 export default ListScreen;

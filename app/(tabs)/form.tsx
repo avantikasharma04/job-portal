@@ -59,7 +59,7 @@ const JobPortalForm = () => {
     <PaperProvider>
       <ScrollView contentContainerStyle={styles.container}>
         <Surface style={styles.formCard}>
-          <Text style={styles.title}>Job Profile</Text>
+          <Text style={styles.title}>Job Application</Text>
 
           {(Object.keys(formData) as FormFields[]).map((field) => (
             <View key={field} style={styles.fieldContainer}>

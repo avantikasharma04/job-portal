@@ -10,6 +10,7 @@ const PORT = 3002;
 
 // Import routes
 const voiceRoutes = require('./routes/voiceRoutes');
+const speechRoutes = require('./routes/speechRoutes');
 
 // Middleware
 app.use(cors());
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 
 // Use routes
 app.use('/api/voice', voiceRoutes);
+app.use('/api/speech', speechRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

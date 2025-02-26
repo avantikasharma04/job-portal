@@ -46,11 +46,8 @@
     "expo-system-ui": "~4.0.8",
     "expo-web-browser": "~14.0.2",
     "express": "^4.21.2",
-
     "firebase": "^11.3.1",
-
     "jest-expo": "~52.0.5",
-
     "job-portal": "file:",
     "lucide-react": "^0.475.0",
     "lucide-react-native": "^0.475.0",
@@ -68,6 +65,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@tsconfig/react-native": "^3.0.5",
     "@types/jest": "^29.5.12",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",

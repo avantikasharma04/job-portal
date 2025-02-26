@@ -38,6 +38,6 @@ yarn-error.*
 app-example
 
 #speech to text
-config/google-credentials.json
+backend/config/google-credentials.json
 .env
 

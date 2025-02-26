@@ -1,1 +1,1 @@
-curl.exe -X POST http://localhost:3002/api/voice/process -F "audio=@.\test.wav" -v
+curl.exe -X POST http://localhost:3002/api/voice/process -F "audio=@.\tests\voice\audio\test.wav" -v

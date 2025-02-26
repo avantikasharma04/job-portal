@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert } from "react-native";
 import { Mic, AlertCircle, User, Phone, MapPin, Volume2 } from "lucide-react";
 import * as Speech from "expo-speech";
 import { createStackNavigator } from "@react-navigation/stack"
@@ -21,6 +21,7 @@ const OnboardingFlow = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [isListening, setIsListening] = useState(false);
+  const [activeField, setActiveField] = useState(null);
 
   const translations = {
     en: {
@@ -47,6 +48,7 @@ const OnboardingFlow = () => {
       no: "No",
       playDescription: "Tap to hear job description",
       finish: "Finish",
+      micOn: "Microphone is on, please speak...",
     },
     hi: {
       selectLanguage: "अपनी भाषा चुनें",
@@ -72,6 +74,7 @@ const OnboardingFlow = () => {
       no: "नहीं",
       playDescription: "नौकरी का विवरण सुनने के लिए टैप करें",
       finish: "समाप्त करें",
+      micOn: "माइक्रोफ़ोन चालू है, कृपया बोलें...",
     },
   };
 
@@ -114,9 +117,29 @@ const OnboardingFlow = () => {
   };
 
   const handleVoiceInput = (field) => {
+    
+    setActiveField(field);
+    
     setIsListening(true);
+    
+    
+    if (Platform && Platform.OS !== 'web') {
+      try {
+        
+        const Haptics = require('expo-haptics');
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch (error) {
+        console.log('Haptics not available');
+      }
+    }
+    
+    
+    const micMessage = getText("micOn");
+    Alert.alert("", micMessage, [], { cancelable: true });
+    
     setTimeout(() => {
       setIsListening(false);
+      setActiveField(null);
       if (field === 'job') {
         setSelectedJob(jobs[selectedLanguage][0]);
       } else {
@@ -158,31 +181,63 @@ const OnboardingFlow = () => {
   );
 
   const renderUserDetails = () => (
-
     <View>
       <Text style={styles.title}>{getText("aboutYourself")}</Text>
 
       <View style={styles.inputBox}>
         <User size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakName")}</Text>
-        <TouchableOpacity onPress={() => handleVoiceInput("name")}>
-          <Mic size={20} color="#666" />
+        <TouchableOpacity 
+          onPress={() => handleVoiceInput("name")}
+          activeOpacity={0.6}
+        >
+          <View style={[
+            styles.micIconWrapper,
+            isListening && activeField === "name" && styles.activeMicWrapper
+          ]}>
+            <Mic 
+              size={20} 
+              color={isListening && activeField === "name" ? "#fff" : "#666"} 
+            />
+          </View>
         </TouchableOpacity>
       </View>
 
       <View style={styles.inputBox}>
         <Phone size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakPhone")}</Text>
-        <TouchableOpacity onPress={() => handleVoiceInput("phone")}>
-          <Mic size={20} color="#666" />
+        <TouchableOpacity 
+          onPress={() => handleVoiceInput("phone")}
+          activeOpacity={0.6}
+        >
+          <View style={[
+            styles.micIconWrapper,
+            isListening && activeField === "phone" && styles.activeMicWrapper
+          ]}>
+            <Mic 
+              size={20} 
+              color={isListening && activeField === "phone" ? "#fff" : "#666"} 
+            />
+          </View>
         </TouchableOpacity>
       </View>
 
       <View style={styles.inputBox}>
         <MapPin size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakLocation")}</Text>
-        <TouchableOpacity onPress={() => handleVoiceInput("location")}>
-          <Mic size={20} color="#666" />
+        <TouchableOpacity 
+          onPress={() => handleVoiceInput("location")}
+          activeOpacity={0.6}
+        >
+          <View style={[
+            styles.micIconWrapper,
+            isListening && activeField === "location" && styles.activeMicWrapper
+          ]}>
+            <Mic 
+              size={20} 
+              color={isListening && activeField === "location" ? "#fff" : "#666"} 
+            />
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -228,14 +283,13 @@ const OnboardingFlow = () => {
         ]} 
         onPress={()=>
           {if (userData.userType === "employer") {
-            navigation.navigate("SignupScreen"); // Navigate to employer screen
+            navigation.navigate("SignupScreen"); 
           } else if (userData.userType === "employee") {
-            setStep("job"); // Navigate to employee screen
+            setStep("job"); 
           } else {
             alert("Please select a user type first!");
-          }}
+          }}
         }
-        //onPress={() => userData.userType && setStep("job")}
       >
         <Text style={styles.continueText}>{getText("continue")}</Text>
       </TouchableOpacity>
@@ -253,6 +307,7 @@ const OnboardingFlow = () => {
         <TouchableOpacity
           onPress={() => handleVoiceInput('job')}
           style={[styles.micButton, isListening && styles.micButtonActive]}
+          activeOpacity={0.6}
         >
           <View style={styles.micIconContainer}>
             <Text>🎤</Text>
@@ -413,7 +468,6 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
-
   continueButton: {
     backgroundColor: "#007bff",
     padding: 15,
@@ -507,6 +561,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  
+  micIconWrapper: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  activeMicWrapper: {
+    backgroundColor: '#FF3B30',
+    borderColor: '#FF3B30',
+    transform: [{scale: 1.1}],
+  },
 });
 
 const HomeScreen1 = () => {
@@ -518,7 +585,5 @@ const HomeScreen1 = () => {
     </Stack.Navigator>
   );
 };
-
-
 
 export default HomeScreen1;

@@ -6,6 +6,8 @@ import { createStackNavigator } from "@react-navigation/stack"
 import HomeScreen from "./home";
 import { useNavigation } from "expo-router";
 import SignupScreen from "./signup";
+import speechToTextService from '../../src/services/speechToTextService';
+import jobService from '../../src/services/jobService';
 
 const Stack = createStackNavigator();
 
@@ -113,20 +115,142 @@ const OnboardingFlow = () => {
     }
   };
 
-  const handleVoiceInput = (field) => {
-    setIsListening(true);
-    setTimeout(() => {
+  const handleVoiceInput = async (field) => {
+    try {
+      setIsListening(true);
+  
+      // Get the appropriate language code based on selected language
+      const languageCode = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
+  
+      // Start recording
+      const speech = await speechToTextService.recognizeSpeech(languageCode);
+  
+      // Wait for 3 seconds to get enough speech input
+      setTimeout(async () => {
+        try {
+          // Stop recording and get transcription
+          const result = await speech.stop();
+          setIsListening(false);
+  
+          // Log the result object to inspect its structure
+          console.log('Speech recognition result:', result);
+  
+          if (result.success) {
+            // Check if result.text exists and has a transcription property
+            if (result.transcription && result.transcription.transcription) {
+              const transcription = result.transcription.transcription;
+              const spokenText = transcription.toLowerCase();
+  
+              if (field === 'job') {
+                // For job field, try to match with available jobs or create custom job
+                let matchedJob = null;
+  
+                // Try to find a matching job in our predefined list
+                for (const job of jobs[selectedLanguage]) {
+                  if (
+                    job.title.toLowerCase().includes(spokenText) ||
+                    spokenText.includes(job.title.toLowerCase())
+                  ) {
+                    matchedJob = job;
+                    break;
+                  }
+                }
+  
+                // If no match found, create a custom job entry
+                if (!matchedJob && spokenText.length > 0) {
+                  matchedJob = {
+                    id: 'custom',
+                    title: transcription, // Use the original transcription (not lowercase)
+                    description: getText('customJobDescription') || 'Custom job based on voice input',
+                  };
+                }
+  
+                if (matchedJob) {
+                  setSelectedJob(matchedJob);
+                } else {
+                  // If no match and no clear speech detected
+                  alert(
+                    translations[selectedLanguage]?.noSpeechDetected ||
+                    'No speech detected. Please try again.'
+                  );
+                }
+              } else {
+                // For other fields (name, phone, location), directly update the state
+                setUserData((prev) => ({
+                  ...prev,
+                  [field]: transcription, // Use the original transcription (not lowercase)
+                }));
+              }
+            } else {
+              console.error('Transcription is missing in the result:', result);
+              alert(
+                translations[selectedLanguage]?.speechRecognitionFailed ||
+                'Speech recognition failed. Please try again.'
+              );
+            }
+          } else {
+            console.error('Speech recognition failed:', result.error);
+            alert(
+              translations[selectedLanguage]?.speechRecognitionFailed ||
+              'Speech recognition failed. Please try again.'
+            );
+          }
+        } catch (error) {
+          console.error('Error in voice input handling:', error);
+          setIsListening(false);
+        }
+      }, 3000);
+    } catch (error) {
+      console.error('Error starting voice input:', error);
       setIsListening(false);
-      if (field === 'job') {
-        setSelectedJob(jobs[selectedLanguage][0]);
-      } else {
-        setUserData(prev => ({
-          ...prev,
-          [field]: `Sample ${field}`
-        }));
-      }
-    }, 2000);
+    }
   };
+const handleFinalSubmission = async () => {
+  try {
+    // Prepare complete user data
+    const completeUserData = {
+      ...userData,
+      language: selectedLanguage,
+      jobPreference: selectedJob.title,
+      jobDescription: selectedJob.description,
+      userType: 'employee' // Since this is for job seekers
+    };
+
+    // First create the user profile
+    const profileResult = await jobService.createUserProfile(completeUserData);
+
+    if (!profileResult.success) {
+      throw new Error('Failed to create user profile');
+    }
+
+    // Then create a job listing if this is an employee
+    if (userData.userType === 'employee') {
+      const jobData = {
+        jobTitle: selectedJob.title,
+        jobDescription: selectedJob.description,
+        userProfile: profileResult.profileId,
+        contactPhone: userData.phone,
+        location: userData.location,
+        name: userData.name,
+        language: selectedLanguage
+      };
+
+      const jobResult = await jobService.createJobListing(jobData);
+
+      if (!jobResult.success) {
+        throw new Error('Failed to create job listing');
+      }
+    }
+
+    // Navigate to home screen on success
+    console.log("Final submission successful");
+    navigation.navigate('HomeScreen');
+
+  } catch (error) {
+    console.error('Error in final submission:', error);
+    alert('There was an error saving your information. Please try again.');
+  }
+};
 
   const renderLanguageSelection = () => (
     <View>
@@ -288,14 +412,7 @@ const OnboardingFlow = () => {
         <View style={styles.confirmationSection}>
           <TouchableOpacity 
             style={styles.confirmButton}
-            onPress={() => {
-              console.log("Final submission:", {
-                language: selectedLanguage,
-                userData,
-                selectedJob
-              });
-              navigation.navigate('HomeScreen')
-            }}
+            onPress={handleFinalSubmission}
           >
             <Text style={styles.buttonText}>{getText('finish')}</Text>
           </TouchableOpacity>

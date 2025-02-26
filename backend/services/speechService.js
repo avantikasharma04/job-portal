@@ -1,4 +1,3 @@
-// backend/services/speechService.js
 const speech = require('@google-cloud/speech');
 const textToSpeech = require('@google-cloud/text-to-speech');
 const { Storage } = require('@google-cloud/storage');
@@ -8,7 +7,7 @@ class SpeechService {
     this.speechClient = new speech.SpeechClient();
     this.ttsClient = new textToSpeech.TextToSpeechClient();
     this.storage = new Storage();
-    
+
     // Supported languages configuration
     this.supportedLanguages = {
       'en-US': {
@@ -18,22 +17,36 @@ class SpeechService {
       'hi-IN': {
         name: 'Hindi',
         sampleRateHertz: 16000,
-      }
+      },
     };
   }
+
+  /**
+   * Validate and clean the language code.
+   * @param {string} languageCode - The language code to validate.
+   * @returns {string} - The validated and cleaned language code.
+   */
+  validateLanguageCode = (languageCode) => {
+    const cleanedLanguageCode = languageCode.trim();
+    if (!this.supportedLanguages[cleanedLanguageCode]) {
+      console.warn(`Unsupported language code: ${cleanedLanguageCode}. Falling back to en-US.`);
+      return 'en-US'; // Fallback to English
+    }
+    return cleanedLanguageCode;
+  };
 
   // Text to Speech conversion
   async synthesizeSpeech(text, languageCode = 'en-US') {
     try {
       const request = {
         input: { text },
-        voice: { 
+        voice: {
           languageCode,
           ssmlGender: 'NEUTRAL',
         },
-        audioConfig: { 
+        audioConfig: {
           audioEncoding: 'MP3',
-          speakingRate: 0.9,  // Slightly slower for better clarity
+          speakingRate: 0.9, // Slightly slower for better clarity
           pitch: 0,
         },
       };
@@ -52,79 +65,66 @@ class SpeechService {
   }
 
   // Real-time speech recognition for short audio
-async transcribeAudio(audioBuffer, languageCode = 'en-US') {
-  try {
-    // Add debugging logs to see what's being received
-    console.log('transcribeAudio received language code:', languageCode);
-    console.log('Supported languages:', Object.keys(this.supportedLanguages));
-    
-    // Clean the language code (remove any whitespace)
-    const cleanedLanguageCode = languageCode.trim();
-    
-    // Check if language code is supported with more detailed error
-    if (!this.supportedLanguages[cleanedLanguageCode]) {
-      console.log(`Language code "${cleanedLanguageCode}" not found in supported languages`);
-      
-      // For now, fall back to English instead of throwing an error
-      console.log('Falling back to en-US');
-      languageCode = 'en-US';
-      
-      // Or uncomment this to throw the error as before
-      // throw new Error('Unsupported language code');
-    }
+  async transcribeAudio(audioBuffer, languageCode = 'en-US', isWebAudio = false) {
+    try {
+      const validatedLanguageCode = this.validateLanguageCode(languageCode);
 
-    const request = {
-      audio: {
-        content: audioBuffer.toString('base64'),
-      },
-      config: {
-        encoding: 'LINEAR16',
-        sampleRateHertz: this.supportedLanguages[languageCode].sampleRateHertz,
-        languageCode,
-        enableAutomaticPunctuation: true,
-        model: 'default',
-      },
-    };
+      // Set encoding and sample rate based on WebAudio flag
+      const encoding = isWebAudio ? 'WEBM_OPUS' : 'LINEAR16';
+      const sampleRateHertz = isWebAudio ? 48000 : this.supportedLanguages[validatedLanguageCode].sampleRateHertz;
 
-    console.log('Sending request to Google Speech API...');
-    const [response] = await this.speechClient.recognize(request);
-    console.log('Google API response received:', response ? 'yes' : 'no');
-    
-    if (!response.results || response.results.length === 0) {
+      const request = {
+        audio: {
+          content: audioBuffer.toString('base64'),
+        },
+        config: {
+          encoding: encoding,
+          sampleRateHertz: sampleRateHertz,
+          languageCode: validatedLanguageCode,
+          enableAutomaticPunctuation: true,
+          model: 'default',
+          audioChannelCount: 1, // Mono audio
+        },
+      };
+
+      console.log('Sending request to Google Speech API...');
+      const [response] = await this.speechClient.recognize(request);
+      console.log('Google API response received:', response ? 'yes' : 'no');
+
+      if (!response.results || response.results.length === 0) {
+        return {
+          success: false,
+          error: 'No speech detected',
+        };
+      }
+
+      return {
+        success: true,
+        transcription: response.results
+          .map(result => result.alternatives[0].transcript)
+          .join(' '),
+        confidence: response.results[0].alternatives[0].confidence,
+      };
+    } catch (error) {
+      console.error('Error in transcribeAudio:', error.message);
       return {
         success: false,
-        error: 'No speech detected',
+        error: error.message,
       };
     }
-
-    return {
-      success: true,
-      transcription: response.results
-        .map(result => result.alternatives[0].transcript)
-        .join(' '),
-      confidence: response.results[0].alternatives[0].confidence,
-    };
-  } catch (error) {
-    console.error('Error in transcribeAudio:', error.message);
-    return {
-      success: false,
-      error: error.message,
-    };
   }
-}
+
   // Long audio file transcription from Google Cloud Storage
   async transcribeAudioFile(gcsUri, languageCode = 'en-US') {
     try {
-      if (!this.supportedLanguages[languageCode]) {
-        throw new Error('Unsupported language code');
-      }
+      const validatedLanguageCode = this.validateLanguageCode(languageCode);
 
       const request = {
         audio: { uri: gcsUri },
         config: {
           encoding: 'LINEAR16',
-          sampleRateHertz: this.supportedLanguages[languageCode].sampleRateHertz,
-          languageCode,
+          sampleRateHertz: this.supportedLanguages[validatedLanguageCode].sampleRateHertz,
+          languageCode: validatedLanguageCode,
           enableAutomaticPunctuation: true,
           model: 'default',
         },
@@ -168,7 +168,7 @@ async transcribeAudio(audioBuffer, languageCode = 'en-US') {
         experience: 'आपके पास कितने साल का काम का अनुभव है?',
         location: 'आप किस शहर में रहते हैं?',
         contact: 'कृपया अपना संपर्क नंबर बोलें।',
-      }
+      },
     };
 
     try {

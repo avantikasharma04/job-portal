@@ -6,6 +6,8 @@ import { createStackNavigator } from "@react-navigation/stack"
 import HomeScreen from "./home";
 import { useNavigation } from "expo-router";
 import SignupScreen from "./signup";
+import speechToTextService from '../../src/services/speechToTextService';
+import jobService from '../../src/services/jobService';
 
 const Stack = createStackNavigator();
 
@@ -117,29 +119,9 @@ const OnboardingFlow = () => {
   };
 
   const handleVoiceInput = (field) => {
-    
-    setActiveField(field);
-    
     setIsListening(true);
-    
-    
-    if (Platform && Platform.OS !== 'web') {
-      try {
-        
-        const Haptics = require('expo-haptics');
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch (error) {
-        console.log('Haptics not available');
-      }
-    }
-    
-    
-    const micMessage = getText("micOn");
-    Alert.alert("", micMessage, [], { cancelable: true });
-    
     setTimeout(() => {
       setIsListening(false);
-      setActiveField(null);
       if (field === 'job') {
         setSelectedJob(jobs[selectedLanguage][0]);
       } else {
@@ -343,14 +325,7 @@ const OnboardingFlow = () => {
         <View style={styles.confirmationSection}>
           <TouchableOpacity 
             style={styles.confirmButton}
-            onPress={() => {
-              console.log("Final submission:", {
-                language: selectedLanguage,
-                userData,
-                selectedJob
-              });
-              navigation.navigate('HomeScreen')
-            }}
+            onPress={handleFinalSubmission}
           >
             <Text style={styles.buttonText}>{getText('finish')}</Text>
           </TouchableOpacity>

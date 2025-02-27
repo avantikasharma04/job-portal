@@ -1,7 +1,7 @@
 {
   "name": "job-portal",
-  "version": "1.0.0",
   "main": "expo-router/entry",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "start": "expo start",
@@ -19,7 +19,6 @@
     "@expo/config-plugins": "9.0.15",
     "@expo/prebuild-config": "8.0.28",
     "@expo/vector-icons": "^14.0.2",
-    "@firebase/firestore": "^4.7.8",
     "@google-cloud/speech": "^6.7.0",
     "@google-cloud/storage": "^7.15.2",
     "@google-cloud/text-to-speech": "^5.8.0",
@@ -84,15 +83,8 @@
     "typescript": "^5.3.3"
   },
   "private": true,
-  "description": "This is an Expo project created with create-expo-app.",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/avantikasharma04/job-portal/issues"
-  },
-  "homepage": "https://github.com/avantikasharma04/job-portal#readme",
-  "expo": {
+
+ "expo": {
     "plugins": [
       [
         "expo-image-picker",
@@ -103,4 +95,21 @@
       ]
     ]
   }
+
+  "description": "This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avantikasharma04/job-portal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/avantikasharma04/job-portal/issues"
+  },
+  "homepage": "https://github.com/avantikasharma04/job-portal#readme"
+
 }

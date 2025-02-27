@@ -39,7 +39,6 @@
     "expo-file-system": "^18.0.11",
     "expo-font": "~13.0.3",
     "expo-haptics": "~14.0.1",
-    "expo-image-picker": "^16.0.6",
     "expo-linking": "~7.0.5",
     "expo-location": "~18.0.6",
     "expo-router": "~4.0.17",
@@ -83,20 +82,7 @@
     "typescript": "^5.3.3"
   },
   "private": true,
-
- "expo": {
-    "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "The app accesses your photos for profile pictures.",
-          "cameraPermission": "The app accesses your camera to take profile pictures."
-        }
-      ]
-    ]
-  }
-
-  "description": "This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).",
+  "description": "This is an [Expo](https://expo.dev) project created with [create-expo-app](https://www.npmjs.com/package/create-expo-app).",
   "directories": {
     "test": "tests"
   },
@@ -111,5 +97,4 @@
     "url": "https://github.com/avantikasharma04/job-portal/issues"
   },
   "homepage": "https://github.com/avantikasharma04/job-portal#readme"
-
 }

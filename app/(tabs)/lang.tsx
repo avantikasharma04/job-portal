@@ -105,6 +105,11 @@ const OnboardingFlow = () => {
     Speech.speak(language.name, { language: language.voice });
   };
 
+  const speakText = (text) => {
+    const language = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
+    Speech.speak(text, { language });
+  };
+
   const playJobDescription = async (job) => {
     try {
       const description = job.description;
@@ -205,6 +210,7 @@ const OnboardingFlow = () => {
       setIsListening(false);
     }
   };
+  
 const handleFinalSubmission = async () => {
   try {
     // Prepare complete user data
@@ -289,29 +295,50 @@ const handleFinalSubmission = async () => {
       <View style={styles.inputBox}>
         <User size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakName")}</Text>
-        <TouchableOpacity onPress={() => handleVoiceInput("name")}>
-          <Mic size={20} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.inputActions}>
+          <TouchableOpacity onPress={() => speakText(getText("speakName"))} style={styles.speakerButton}>
+            <Volume2 size={20} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleVoiceInput("name")}>
+            <Mic size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.inputBox}>
         <Phone size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakPhone")}</Text>
-        <TouchableOpacity onPress={() => handleVoiceInput("phone")}>
-          <Mic size={20} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.inputActions}>
+          <TouchableOpacity onPress={() => speakText(getText("speakPhone"))} style={styles.speakerButton}>
+            <Volume2 size={20} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleVoiceInput("phone")}>
+            <Mic size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.inputBox}>
         <MapPin size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakLocation")}</Text>
-        <TouchableOpacity onPress={() => handleVoiceInput("location")}>
-          <Mic size={20} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.inputActions}>
+          <TouchableOpacity onPress={() => speakText(getText("speakLocation"))} style={styles.speakerButton}>
+            <Volume2 size={20} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleVoiceInput("location")}>
+            <Mic size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.userTypeContainer}>
         <Text style={styles.userTypeTitle}>{getText("userTypeQuestion")}</Text>
+        <TouchableOpacity 
+          onPress={() => speakText(getText("userTypeQuestion"))} 
+          style={styles.titleSpeakerButton}
+        >
+          <Volume2 size={20} color="#666" />
+        </TouchableOpacity>
         <View style={styles.userTypeButtons}>
           <TouchableOpacity
             style={[
@@ -357,7 +384,7 @@ const handleFinalSubmission = async () => {
             setStep("job"); // Navigate to employee screen
           } else {
             alert("Please select a user type first!");
-          }}
+          }}
         }
         //onPress={() => userData.userType && setStep("job")}
       >
@@ -370,10 +397,16 @@ const handleFinalSubmission = async () => {
     <ScrollView>
       <View style={styles.header}>
         <Text style={styles.title}>{getText('selectJob')}</Text>
+        <TouchableOpacity onPress={() => speakText(getText('selectJob'))} style={styles.titleSpeakerButton}>
+          <Volume2 size={20} color="#666" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.voiceSection}>
         <Text style={styles.instruction}>{getText('jobInstruction')}</Text>
+        <TouchableOpacity onPress={() => speakText(getText('jobInstruction'))} style={styles.instructionSpeakerButton}>
+          <Volume2 size={20} color="#666" />
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleVoiceInput('job')}
           style={[styles.micButton, isListening && styles.micButtonActive]}
@@ -402,7 +435,7 @@ const handleFinalSubmission = async () => {
               onPress={() => playJobDescription(job)}
               style={styles.speakerButton}
             >
-              <Text>🔊</Text>
+              <Volume2 size={20} color="#666" />
             </TouchableOpacity>
           </TouchableOpacity>
         ))}
@@ -493,15 +526,31 @@ const styles = StyleSheet.create({
     color: "#666",
     marginLeft: 10,
   },
+  inputActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  speakerButton: {
+    marginRight: 15,
+  },
   userTypeContainer: {
     marginTop: 20,
     marginBottom: 10,
+    position: "relative",
   },
   userTypeTitle: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 10,
     textAlign: "center",
+  },
+  titleSpeakerButton: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
+  instructionSpeakerButton: {
+    marginBottom: 10,
   },
   userTypeButtons: {
     flexDirection: "row",
@@ -546,6 +595,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 20,
+    position: 'relative',
   },
   voiceSection: {
     alignItems: 'center',
@@ -598,9 +648,6 @@ const styles = StyleSheet.create({
   jobTitle: {
     fontSize: 18,
   },
-  speakerButton: {
-    padding: 10,
-  },
   confirmationSection: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -635,7 +682,5 @@ const HomeScreen1 = () => {
     </Stack.Navigator>
   );
 };
-
-
 
 export default HomeScreen1;

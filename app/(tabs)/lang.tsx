@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Mic, AlertCircle, User, Phone, MapPin, Volume2 } from "lucide-react";
 import * as Speech from "expo-speech";
 import { createStackNavigator } from "@react-navigation/stack"
@@ -23,7 +23,6 @@ const OnboardingFlow = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [isListening, setIsListening] = useState(false);
-  const [activeField, setActiveField] = useState(null);
 
   const translations = {
     en: {
@@ -50,7 +49,6 @@ const OnboardingFlow = () => {
       no: "No",
       playDescription: "Tap to hear job description",
       finish: "Finish",
-      micOn: "Microphone is on, please speak...",
     },
     hi: {
       selectLanguage: "अपनी भाषा चुनें",
@@ -76,7 +74,6 @@ const OnboardingFlow = () => {
       no: "नहीं",
       playDescription: "नौकरी का विवरण सुनने के लिए टैप करें",
       finish: "समाप्त करें",
-      micOn: "माइक्रोफ़ोन चालू है, कृपया बोलें...",
     },
   };
 
@@ -118,20 +115,142 @@ const OnboardingFlow = () => {
     }
   };
 
-  const handleVoiceInput = (field) => {
-    setIsListening(true);
-    setTimeout(() => {
+  const handleVoiceInput = async (field) => {
+    try {
+      setIsListening(true);
+  
+      // Get the appropriate language code based on selected language
+      const languageCode = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
+  
+      // Start recording
+      const speech = await speechToTextService.recognizeSpeech(languageCode);
+  
+      // Wait for 3 seconds to get enough speech input
+      setTimeout(async () => {
+        try {
+          // Stop recording and get transcription
+          const result = await speech.stop();
+          setIsListening(false);
+  
+          // Log the result object to inspect its structure
+          console.log('Speech recognition result:', result);
+  
+          if (result.success) {
+            // Check if result.text exists and has a transcription property
+            if (result.transcription && result.transcription.transcription) {
+              const transcription = result.transcription.transcription;
+              const spokenText = transcription.toLowerCase();
+  
+              if (field === 'job') {
+                // For job field, try to match with available jobs or create custom job
+                let matchedJob = null;
+  
+                // Try to find a matching job in our predefined list
+                for (const job of jobs[selectedLanguage]) {
+                  if (
+                    job.title.toLowerCase().includes(spokenText) ||
+                    spokenText.includes(job.title.toLowerCase())
+                  ) {
+                    matchedJob = job;
+                    break;
+                  }
+                }
+  
+                // If no match found, create a custom job entry
+                if (!matchedJob && spokenText.length > 0) {
+                  matchedJob = {
+                    id: 'custom',
+                    title: transcription, // Use the original transcription (not lowercase)
+                    description: getText('customJobDescription') || 'Custom job based on voice input',
+                  };
+                }
+  
+                if (matchedJob) {
+                  setSelectedJob(matchedJob);
+                } else {
+                  // If no match and no clear speech detected
+                  alert(
+                    translations[selectedLanguage]?.noSpeechDetected ||
+                    'No speech detected. Please try again.'
+                  );
+                }
+              } else {
+                // For other fields (name, phone, location), directly update the state
+                setUserData((prev) => ({
+                  ...prev,
+                  [field]: transcription, // Use the original transcription (not lowercase)
+                }));
+              }
+            } else {
+              console.error('Transcription is missing in the result:', result);
+              alert(
+                translations[selectedLanguage]?.speechRecognitionFailed ||
+                'Speech recognition failed. Please try again.'
+              );
+            }
+          } else {
+            console.error('Speech recognition failed:', result.error);
+            alert(
+              translations[selectedLanguage]?.speechRecognitionFailed ||
+              'Speech recognition failed. Please try again.'
+            );
+          }
+        } catch (error) {
+          console.error('Error in voice input handling:', error);
+          setIsListening(false);
+        }
+      }, 3000);
+    } catch (error) {
+      console.error('Error starting voice input:', error);
       setIsListening(false);
-      if (field === 'job') {
-        setSelectedJob(jobs[selectedLanguage][0]);
-      } else {
-        setUserData(prev => ({
-          ...prev,
-          [field]: `Sample ${field}`
-        }));
-      }
-    }, 2000);
+    }
   };
+const handleFinalSubmission = async () => {
+  try {
+    // Prepare complete user data
+    const completeUserData = {
+      ...userData,
+      language: selectedLanguage,
+      jobPreference: selectedJob.title,
+      jobDescription: selectedJob.description,
+      userType: 'employee' // Since this is for job seekers
+    };
+
+    // First create the user profile
+    const profileResult = await jobService.createUserProfile(completeUserData);
+
+    if (!profileResult.success) {
+      throw new Error('Failed to create user profile');
+    }
+
+    // Then create a job listing if this is an employee
+    if (userData.userType === 'employee') {
+      const jobData = {
+        jobTitle: selectedJob.title,
+        jobDescription: selectedJob.description,
+        userProfile: profileResult.profileId,
+        contactPhone: userData.phone,
+        location: userData.location,
+        name: userData.name,
+        language: selectedLanguage
+      };
+
+      const jobResult = await jobService.createJobListing(jobData);
+
+      if (!jobResult.success) {
+        throw new Error('Failed to create job listing');
+      }
+    }
+
+    // Navigate to home screen on success
+    console.log("Final submission successful");
+    navigation.navigate('HomeScreen');
+
+  } catch (error) {
+    console.error('Error in final submission:', error);
+    alert('There was an error saving your information. Please try again.');
+  }
+};
 
   const renderLanguageSelection = () => (
     <View>
@@ -163,63 +282,31 @@ const OnboardingFlow = () => {
   );
 
   const renderUserDetails = () => (
+
     <View>
       <Text style={styles.title}>{getText("aboutYourself")}</Text>
 
       <View style={styles.inputBox}>
         <User size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakName")}</Text>
-        <TouchableOpacity 
-          onPress={() => handleVoiceInput("name")}
-          activeOpacity={0.6}
-        >
-          <View style={[
-            styles.micIconWrapper,
-            isListening && activeField === "name" && styles.activeMicWrapper
-          ]}>
-            <Mic 
-              size={20} 
-              color={isListening && activeField === "name" ? "#fff" : "#666"} 
-            />
-          </View>
+        <TouchableOpacity onPress={() => handleVoiceInput("name")}>
+          <Mic size={20} color="#666" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.inputBox}>
         <Phone size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakPhone")}</Text>
-        <TouchableOpacity 
-          onPress={() => handleVoiceInput("phone")}
-          activeOpacity={0.6}
-        >
-          <View style={[
-            styles.micIconWrapper,
-            isListening && activeField === "phone" && styles.activeMicWrapper
-          ]}>
-            <Mic 
-              size={20} 
-              color={isListening && activeField === "phone" ? "#fff" : "#666"} 
-            />
-          </View>
+        <TouchableOpacity onPress={() => handleVoiceInput("phone")}>
+          <Mic size={20} color="#666" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.inputBox}>
         <MapPin size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakLocation")}</Text>
-        <TouchableOpacity 
-          onPress={() => handleVoiceInput("location")}
-          activeOpacity={0.6}
-        >
-          <View style={[
-            styles.micIconWrapper,
-            isListening && activeField === "location" && styles.activeMicWrapper
-          ]}>
-            <Mic 
-              size={20} 
-              color={isListening && activeField === "location" ? "#fff" : "#666"} 
-            />
-          </View>
+        <TouchableOpacity onPress={() => handleVoiceInput("location")}>
+          <Mic size={20} color="#666" />
         </TouchableOpacity>
       </View>
 
@@ -265,13 +352,14 @@ const OnboardingFlow = () => {
         ]} 
         onPress={()=>
           {if (userData.userType === "employer") {
-            navigation.navigate("SignupScreen"); 
+            navigation.navigate("SignupScreen"); // Navigate to employer screen
           } else if (userData.userType === "employee") {
-            setStep("job"); 
+            setStep("job"); // Navigate to employee screen
           } else {
             alert("Please select a user type first!");
-          }}
+          }}
         }
+        //onPress={() => userData.userType && setStep("job")}
       >
         <Text style={styles.continueText}>{getText("continue")}</Text>
       </TouchableOpacity>
@@ -289,7 +377,6 @@ const OnboardingFlow = () => {
         <TouchableOpacity
           onPress={() => handleVoiceInput('job')}
           style={[styles.micButton, isListening && styles.micButtonActive]}
-          activeOpacity={0.6}
         >
           <View style={styles.micIconContainer}>
             <Text>🎤</Text>
@@ -443,6 +530,7 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
+
   continueButton: {
     backgroundColor: "#007bff",
     padding: 15,
@@ -536,19 +624,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  
-  micIconWrapper: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  activeMicWrapper: {
-    backgroundColor: '#FF3B30',
-    borderColor: '#FF3B30',
-    transform: [{scale: 1.1}],
-  },
 });
 
 const HomeScreen1 = () => {
@@ -560,5 +635,7 @@ const HomeScreen1 = () => {
     </Stack.Navigator>
   );
 };
+
+
 
 export default HomeScreen1;

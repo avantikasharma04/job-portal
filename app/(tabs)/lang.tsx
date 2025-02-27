@@ -22,7 +22,19 @@ const OnboardingFlow = () => {
     userType: "",
   });
   const [selectedJob, setSelectedJob] = useState(null);
-  const [isListening, setIsListening] = useState(false);
+  const [listeningField, setListeningField] = useState(null);
+  
+  // Replace single isSpeaking with an object to track each speaker separately
+  const [speakingState, setSpeakingState] = useState({
+    language: null, // For language speakers
+    nameInstructions: false,
+    phoneInstructions: false,
+    locationInstructions: false,
+    userTypeQuestion: false,
+    selectJob: false,
+    jobInstructions: false,
+    jobDescription: null, // For job description speakers
+  });
 
   const translations = {
     en: {
@@ -102,27 +114,60 @@ const OnboardingFlow = () => {
   const getText = (key) => translations[selectedLanguage]?.[key] || translations.en[key];
 
   const playLanguageVoice = (language) => {
-    Speech.speak(language.name, { language: language.voice });
+    // Set only this specific language as speaking
+    setSpeakingState(prev => ({
+      ...prev,
+      language: language.id
+    }));
+    
+    Speech.speak(language.name, { 
+      language: language.voice,
+      onDone: () => setSpeakingState(prev => ({...prev, language: null})),
+      onStopped: () => setSpeakingState(prev => ({...prev, language: null}))
+    });
   };
 
-  const speakText = (text) => {
+  const speakText = (text, speakerKey) => {
     const language = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
-    Speech.speak(text, { language });
+    
+    // Set only this specific speaker as active
+    setSpeakingState(prev => ({
+      ...prev,
+      [speakerKey]: true
+    }));
+    
+    Speech.speak(text, { 
+      language,
+      onDone: () => setSpeakingState(prev => ({...prev, [speakerKey]: false})),
+      onStopped: () => setSpeakingState(prev => ({...prev, [speakerKey]: false}))
+    });
   };
 
   const playJobDescription = async (job) => {
     try {
       const description = job.description;
       const language = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
-      await Speech.speak(description, { language });
+      
+      // Set only this specific job description as speaking
+      setSpeakingState(prev => ({
+        ...prev,
+        jobDescription: job.id
+      }));
+      
+      await Speech.speak(description, { 
+        language,
+        onDone: () => setSpeakingState(prev => ({...prev, jobDescription: null})),
+        onStopped: () => setSpeakingState(prev => ({...prev, jobDescription: null}))
+      });
     } catch (error) {
+      setSpeakingState(prev => ({...prev, jobDescription: null}));
       console.error('Error playing description:', error);
     }
   };
 
   const handleVoiceInput = async (field) => {
     try {
-      setIsListening(true);
+      setListeningField(field);
   
       // Get the appropriate language code based on selected language
       const languageCode = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
@@ -135,8 +180,7 @@ const OnboardingFlow = () => {
         try {
           // Stop recording and get transcription
           const result = await speech.stop();
-          setIsListening(false);
-  
+          setListeningField(null);
           // Log the result object to inspect its structure
           console.log('Speech recognition result:', result);
   
@@ -202,61 +246,61 @@ const OnboardingFlow = () => {
           }
         } catch (error) {
           console.error('Error in voice input handling:', error);
-          setIsListening(false);
+          setListeningField(null);
         }
       }, 3000);
     } catch (error) {
       console.error('Error starting voice input:', error);
-      setIsListening(false);
+      setListeningField(null);
     }
   };
   
-const handleFinalSubmission = async () => {
-  try {
-    // Prepare complete user data
-    const completeUserData = {
-      ...userData,
-      language: selectedLanguage,
-      jobPreference: selectedJob.title,
-      jobDescription: selectedJob.description,
-      userType: 'employee' // Since this is for job seekers
-    };
-
-    // First create the user profile
-    const profileResult = await jobService.createUserProfile(completeUserData);
-
-    if (!profileResult.success) {
-      throw new Error('Failed to create user profile');
-    }
-
-    // Then create a job listing if this is an employee
-    if (userData.userType === 'employee') {
-      const jobData = {
-        jobTitle: selectedJob.title,
+  const handleFinalSubmission = async () => {
+    try {
+      // Prepare complete user data
+      const completeUserData = {
+        ...userData,
+        language: selectedLanguage,
+        jobPreference: selectedJob.title,
         jobDescription: selectedJob.description,
-        userProfile: profileResult.profileId,
-        contactPhone: userData.phone,
-        location: userData.location,
-        name: userData.name,
-        language: selectedLanguage
+        userType: 'employee' // Since this is for job seekers
       };
 
-      const jobResult = await jobService.createJobListing(jobData);
+      // First create the user profile
+      const profileResult = await jobService.createUserProfile(completeUserData);
 
-      if (!jobResult.success) {
-        throw new Error('Failed to create job listing');
+      if (!profileResult.success) {
+        throw new Error('Failed to create user profile');
       }
+
+      // Then create a job listing if this is an employee
+      if (userData.userType === 'employee') {
+        const jobData = {
+          jobTitle: selectedJob.title,
+          jobDescription: selectedJob.description,
+          userProfile: profileResult.profileId,
+          contactPhone: userData.phone,
+          location: userData.location,
+          name: userData.name,
+          language: selectedLanguage
+        };
+
+        const jobResult = await jobService.createJobListing(jobData);
+
+        if (!jobResult.success) {
+          throw new Error('Failed to create job listing');
+        }
+      }
+
+      // Navigate to home screen on success
+      console.log("Final submission successful");
+      navigation.navigate('HomeScreen');
+
+    } catch (error) {
+      console.error('Error in final submission:', error);
+      alert('There was an error saving your information. Please try again.');
     }
-
-    // Navigate to home screen on success
-    console.log("Final submission successful");
-    navigation.navigate('HomeScreen');
-
-  } catch (error) {
-    console.error('Error in final submission:', error);
-    alert('There was an error saving your information. Please try again.');
-  }
-};
+  };
 
   const renderLanguageSelection = () => (
     <View>
@@ -280,7 +324,7 @@ const handleFinalSubmission = async () => {
         >
           <Text style={styles.languageText}>{lang.name}</Text>
           <TouchableOpacity onPress={() => playLanguageVoice(lang)}>
-            <Mic size={20} color="#666" />
+            <Volume2 size={20} color={speakingState.language === lang.id ? "#007bff" : "#666"} />
           </TouchableOpacity>
         </TouchableOpacity>
       ))}
@@ -288,7 +332,6 @@ const handleFinalSubmission = async () => {
   );
 
   const renderUserDetails = () => (
-
     <View>
       <Text style={styles.title}>{getText("aboutYourself")}</Text>
 
@@ -296,11 +339,14 @@ const handleFinalSubmission = async () => {
         <User size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakName")}</Text>
         <View style={styles.inputActions}>
-          <TouchableOpacity onPress={() => speakText(getText("speakName"))} style={styles.speakerButton}>
-            <Volume2 size={20} color="#666" />
+          <TouchableOpacity 
+            onPress={() => speakText(getText("speakName"), "nameInstructions")} 
+            style={styles.speakerButton}
+          >
+            <Volume2 size={20} color={speakingState.nameInstructions ? "#007bff" : "#666"} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleVoiceInput("name")}>
-            <Mic size={20} color="#666" />
+          <TouchableOpacity onPress={() => handleVoiceInput("fieldName")}>
+            <Mic size={20} color={listeningField === "fieldName" ? "#FF3B30" : "#666"} />
           </TouchableOpacity>
         </View>
       </View>
@@ -309,11 +355,14 @@ const handleFinalSubmission = async () => {
         <Phone size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakPhone")}</Text>
         <View style={styles.inputActions}>
-          <TouchableOpacity onPress={() => speakText(getText("speakPhone"))} style={styles.speakerButton}>
-            <Volume2 size={20} color="#666" />
+          <TouchableOpacity 
+            onPress={() => speakText(getText("speakPhone"), "phoneInstructions")} 
+            style={styles.speakerButton}
+          >
+            <Volume2 size={20} color={speakingState.phoneInstructions ? "#007bff" : "#666"} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleVoiceInput("phone")}>
-            <Mic size={20} color="#666" />
+            <Mic size={20} color={listeningField === "phone" ? "#FF3B30" : "#666"} />
           </TouchableOpacity>
         </View>
       </View>
@@ -322,11 +371,14 @@ const handleFinalSubmission = async () => {
         <MapPin size={20} color="#666" />
         <Text style={styles.inputText}>{getText("speakLocation")}</Text>
         <View style={styles.inputActions}>
-          <TouchableOpacity onPress={() => speakText(getText("speakLocation"))} style={styles.speakerButton}>
-            <Volume2 size={20} color="#666" />
+          <TouchableOpacity 
+            onPress={() => speakText(getText("speakLocation"), "locationInstructions")} 
+            style={styles.speakerButton}
+          >
+            <Volume2 size={20} color={speakingState.locationInstructions ? "#007bff" : "#666"} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleVoiceInput("location")}>
-            <Mic size={20} color="#666" />
+            <Mic size={20} color={listeningField === "location" ? "#FF3B30" : "#666"} />
           </TouchableOpacity>
         </View>
       </View>
@@ -334,10 +386,10 @@ const handleFinalSubmission = async () => {
       <View style={styles.userTypeContainer}>
         <Text style={styles.userTypeTitle}>{getText("userTypeQuestion")}</Text>
         <TouchableOpacity 
-          onPress={() => speakText(getText("userTypeQuestion"))} 
+          onPress={() => speakText(getText("userTypeQuestion"), "userTypeQuestion")} 
           style={styles.titleSpeakerButton}
         >
-          <Volume2 size={20} color="#666" />
+          <Volume2 size={20} color={speakingState.userTypeQuestion ? "#007bff" : "#666"} />
         </TouchableOpacity>
         <View style={styles.userTypeButtons}>
           <TouchableOpacity
@@ -386,7 +438,6 @@ const handleFinalSubmission = async () => {
             alert("Please select a user type first!");
           }}
         }
-        //onPress={() => userData.userType && setStep("job")}
       >
         <Text style={styles.continueText}>{getText("continue")}</Text>
       </TouchableOpacity>
@@ -397,25 +448,31 @@ const handleFinalSubmission = async () => {
     <ScrollView>
       <View style={styles.header}>
         <Text style={styles.title}>{getText('selectJob')}</Text>
-        <TouchableOpacity onPress={() => speakText(getText('selectJob'))} style={styles.titleSpeakerButton}>
-          <Volume2 size={20} color="#666" />
+        <TouchableOpacity 
+          onPress={() => speakText(getText('selectJob'), "selectJob")} 
+          style={styles.titleSpeakerButton}
+        >
+          <Volume2 size={20} color={speakingState.selectJob ? "#007bff" : "#666"} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.voiceSection}>
         <Text style={styles.instruction}>{getText('jobInstruction')}</Text>
-        <TouchableOpacity onPress={() => speakText(getText('jobInstruction'))} style={styles.instructionSpeakerButton}>
-          <Volume2 size={20} color="#666" />
+        <TouchableOpacity 
+          onPress={() => speakText(getText('jobInstruction'), "jobInstructions")} 
+          style={styles.instructionSpeakerButton}
+        >
+          <Volume2 size={20} color={speakingState.jobInstructions ? "#007bff" : "#666"} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleVoiceInput('job')}
-          style={[styles.micButton, isListening && styles.micButtonActive]}
+          style={[styles.micButton, listeningField === 'job' && styles.micButtonActive]}
         >
           <View style={styles.micIconContainer}>
             <Text>🎤</Text>
           </View>
         </TouchableOpacity>
-        {isListening && (
+        {listeningField === 'job' && (
           <Text style={styles.listeningText}>{getText('listening')}</Text>
         )}
       </View>
@@ -435,7 +492,7 @@ const handleFinalSubmission = async () => {
               onPress={() => playJobDescription(job)}
               style={styles.speakerButton}
             >
-              <Volume2 size={20} color="#666" />
+              <Volume2 size={20} color={speakingState.jobDescription === job.id ? "#007bff" : "#666"} />
             </TouchableOpacity>
           </TouchableOpacity>
         ))}
@@ -579,7 +636,6 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
-
   continueButton: {
     backgroundColor: "#007bff",
     padding: 15,

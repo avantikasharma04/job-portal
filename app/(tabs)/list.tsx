@@ -331,7 +331,7 @@ const ListScreen = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="ListPage" component={ListPage} options={{ headerShown: false }} />
-      <Stack.Screen name="JobPortalForm" component={JobPortalForm} />
+      <Stack.Screen name="JobPortalForm" component={JobPortalForm} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

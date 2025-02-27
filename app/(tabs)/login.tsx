@@ -97,9 +97,7 @@ const AuthScreen = () => {
           <Button mode="contained"  onPress={() => navigation.navigate('HomeScreen')}  style={styles.button}>
             Sign Up
           </Button>
-          <Button mode="text" onPress={handleLogin} style={styles.button}>
-            Don't have an account? Sign Up
-          </Button>
+       
 
           {message ? <Text style={styles.successText}>{message}</Text> : null}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -155,7 +153,7 @@ const Login1 = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="AuthScreen" component={AuthScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );
 };

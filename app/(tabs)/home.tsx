@@ -35,7 +35,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <Appbar.Header style={styles.header}>
         <Appbar.Content 
-          title="Kaam.com" 
+          title="Kaam.com" onPress={() => navigation.navigate('HomeScreen')}
           titleStyle={styles.headerTitle}
           subtitle="Find Your Dream Job"
         />

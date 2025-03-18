@@ -7,12 +7,12 @@ const InboxScreen = ({ navigation }) => {
   const notifications = [
     {
       id: 1,
-      category: 'Romance',
+      category: 'Job Alert',
       description: 'New arrivals in a soft spring palette.',
     },
     {
       id: 2,
-      category: 'The new romantic',
+      category: 'Job has been found',
       description: 'Floral prints, lace and matching sets.',
     },
     {
@@ -20,16 +20,7 @@ const InboxScreen = ({ navigation }) => {
       category: 'Preppy edit',
       description: 'A new spring arrival of fresh blue tones.',
     },
-    {
-      id: 4,
-      category: 'Florals in focus',
-      description: 'Leisurely looks in vibrant prints',
-    },
-    {
-      id: 5,
-      category: 'H&M Studio S/S 2025',
-      description: 'The collection is out now.',
-    },
+    
   ];
 
   // Handle notification press

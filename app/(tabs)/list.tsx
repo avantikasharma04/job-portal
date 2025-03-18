@@ -17,6 +17,8 @@ type RootStackParamList = {
   JobPortalForm: { job: JobType };
 };
 
+
+
 type ListPageProps = {
   navigation: StackNavigationProp<RootStackParamList, 'ListPage'>;
   route: RouteProp<RootStackParamList, 'ListPage'>;
@@ -117,7 +119,6 @@ const ListPage = ({ navigation }: ListPageProps) => {
     <View style={styles.container}>
       {/* Navbar */}
       <Appbar.Header style={styles.navbar}>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="Job Listings" titleStyle={styles.navbarTitle} />
         <Appbar.Action icon="cog" onPress={() => console.log('Settings Pressed')} />
       </Appbar.Header>
@@ -331,7 +332,7 @@ const ListScreen = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="ListPage" component={ListPage} options={{ headerShown: false }} />
-      <Stack.Screen name="JobPortalForm" component={JobPortalForm} />
+      <Stack.Screen name="JobPortalForm" component={JobPortalForm} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );
 };

@@ -113,7 +113,7 @@ const Profile1 = () => {
     return (
       <Stack.Navigator>
         <Stack.Screen name="emp" component={emp} options={{ headerShown: false }} />
-        <Stack.Screen name="job" component={job} />
+        <Stack.Screen name="job" component={job} options={{ headerShown: false }}/>
       </Stack.Navigator>
     );
   };

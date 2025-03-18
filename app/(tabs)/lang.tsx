@@ -677,8 +677,8 @@ const HomeScreen1 = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="OnboardingFlow" component={OnboardingFlow} options={{ headerShown: false }} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="SignupScreen" component={SignupScreen} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );
 };

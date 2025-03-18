@@ -581,7 +581,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Stack navigator for the worker browse section
 const WorkerBrowseScreen = () => {
   return (
     <Stack.Navigator>

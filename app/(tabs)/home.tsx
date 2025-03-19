@@ -8,7 +8,9 @@ import Profile from './profile';
 import SettingsScreen from './set';
 import { createStackNavigator } from "@react-navigation/stack"
 import Bell from './bell';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+
+const router = useRouter()
 
 const { width } = Dimensions.get('window');
 const Stack = createStackNavigator();
@@ -35,11 +37,11 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <Appbar.Header style={styles.header}>
         <Appbar.Content 
-          title="Kaam.com" onPress={() => navigation.navigate('HomeScreen')}
+          title="Kaam.com" onPress={() => router.push("/home")}
           titleStyle={styles.headerTitle}
           subtitle="Find Your Dream Job"
         />
-        <Appbar.Action icon="bell" onPress={() => navigation.navigate('Bell')} />
+        <Appbar.Action icon="bell" onPress={() => router.push("bell")} />
       </Appbar.Header>
       
       <BottomNavigation
@@ -312,13 +314,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const Home1 = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Bell" component={Bell} options={{ headerShown: false }}/>
-    </Stack.Navigator>
-  );
-};
 
-export default Home1;
+
+export default HomeScreen;

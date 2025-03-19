@@ -581,16 +581,16 @@ const styles = StyleSheet.create({
   },
 });
 
-const WorkerBrowseScreen = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen 
-        name="WorkerBrowse" 
-        component={WorkerBrowse} 
-        options={{ headerShown: false }} 
-      />
-    </Stack.Navigator>
-  );
-};
+// const WorkerBrowseScreen = () => {
+//   return (
+//     <Stack.Navigator>
+//       <Stack.Screen 
+//         name="WorkerBrowse" 
+//         component={WorkerBrowse} 
+//         options={{ headerShown: false }} 
+//       />
+//     </Stack.Navigator>
+//   );
+// };
 
-export default WorkerBrowseScreen;
+export default WorkerBrowse;

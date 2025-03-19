@@ -7,6 +7,9 @@ import { useNavigation } from 'expo-router';
 import SignupScreen from "./signup";
 import HomeScreen from "./home";
 import { createStackNavigator } from "@react-navigation/stack"
+import { useRouter } from 'expo-router';
+
+const router = useRouter()
 
 const Stack = createStackNavigator();
 
@@ -94,7 +97,7 @@ const AuthScreen = () => {
             <Menu.Item onPress={() => setRole("Employer")} title="Employer" />
           </Menu>
 
-          <Button mode="contained"  onPress={() => navigation.navigate('HomeScreen')}  style={styles.button}>
+          <Button mode="contained"  onPress={() => router.push("/home")}  style={styles.button}>
             Login
           </Button>
          
@@ -149,15 +152,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const Login1 = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="AuthScreen" component={AuthScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }}/>
-    </Stack.Navigator>
-  );
-};
 
 
-export default Login1;
+export default AuthScreen;
 

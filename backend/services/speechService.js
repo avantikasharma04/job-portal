@@ -81,8 +81,8 @@ class SpeechService {
           encoding: encoding,
           sampleRateHertz: sampleRateHertz,
           languageCode: validatedLanguageCode,
-          enableAutomaticPunctuation: true,
-          model: 'default',
+          enableAutomaticPunctuation: false,
+          model: validatedLanguageCode === 'hi-IN' ? 'default' : 'phone_call',
           audioChannelCount: 1, // Mono audio
         },
       };

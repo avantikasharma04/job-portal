@@ -4,6 +4,9 @@ import { TextInput, Button, Text, RadioButton, Checkbox, Surface, Provider as Pa
 import { createStackNavigator } from "@react-navigation/stack"
 import { useNavigation } from 'expo-router';
 import AuthScreen from './login';
+import { useRouter } from 'expo-router';
+
+const router = useRouter()
 
 const Stack = createStackNavigator();
 
@@ -131,7 +134,7 @@ const SignupScreen = () => {
             </Text>
           </View>
 
-          <Button mode="contained" onPress={() => navigation.navigate('AuthScreen')} style={styles.button}>
+          <Button mode="contained" onPress={() => router.push("/login")} style={styles.button}>
             Sign Up
           </Button>
 
@@ -200,15 +203,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const Signup1 = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="SignupScreen" component={SignupScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AuthScreen" component={AuthScreen} />
-    </Stack.Navigator>
-  );
-};
 
-export default Signup1;
+export default SignupScreen;
 
 

@@ -8,6 +8,9 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../src/services/firebaseConfig";
 import { auth } from "../../src/services/firebaseConfig";
+import { useRouter } from 'expo-router';
+
+const router = useRouter()
 
 const Stack = createStackNavigator();
 
@@ -16,6 +19,8 @@ type RootStackParamList = {
   JobDetails: { job: any };
   JobPortalForm: { job: JobType };
 };
+
+
 
 type ListPageProps = {
   navigation: StackNavigationProp<RootStackParamList, 'ListPage'>;
@@ -117,9 +122,7 @@ const ListPage = ({ navigation }: ListPageProps) => {
     <View style={styles.container}>
       {/* Navbar */}
       <Appbar.Header style={styles.navbar}>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="Job Listings" titleStyle={styles.navbarTitle} />
-        <Appbar.Action icon="cog" onPress={() => console.log('Settings Pressed')} />
       </Appbar.Header>
 
       <Searchbar
@@ -189,7 +192,7 @@ const ListPage = ({ navigation }: ListPageProps) => {
 
                 <Button 
                   mode="contained" 
-                  onPress={() => navigation.navigate('JobPortalForm', { job: item })} 
+                  onPress={() => router.push("/form")} 
                   style={styles.applyButton}
                 >
                   Apply Now
@@ -327,16 +330,9 @@ const JobListingPreview = () => {
 };
 
 
-const ListScreen = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="ListPage" component={ListPage} options={{ headerShown: false }} />
-      <Stack.Screen name="JobPortalForm" component={JobPortalForm} />
-    </Stack.Navigator>
-  );
-};
+
 
 
 export { JobListingPreview };
 
-export default ListScreen;
+export default ListPage;

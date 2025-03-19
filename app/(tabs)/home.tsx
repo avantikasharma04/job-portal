@@ -6,10 +6,18 @@ import { RouteProp } from '@react-navigation/native';
 import ListPage from './list'
 import Profile from './profile';
 import SettingsScreen from './set';
+import { createStackNavigator } from "@react-navigation/stack"
+import Bell from './bell';
+import { useNavigation, useRouter } from 'expo-router';
+
+const router = useRouter()
 
 const { width } = Dimensions.get('window');
+const Stack = createStackNavigator();
 
 const HomeScreen = () => {
+  const navigation=useNavigation()
+
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     { key: 'home', title: 'Home', icon: 'home' },
@@ -29,11 +37,11 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <Appbar.Header style={styles.header}>
         <Appbar.Content 
-          title="Kaam.com" 
+          title="Kaam.com" onPress={() => router.push("/home")}
           titleStyle={styles.headerTitle}
           subtitle="Find Your Dream Job"
         />
-        <Appbar.Action icon="bell" onPress={() => {}} />
+        <Appbar.Action icon="bell" onPress={() => router.push("bell")} />
       </Appbar.Header>
       
       <BottomNavigation
@@ -305,5 +313,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 });
+
+
 
 export default HomeScreen;

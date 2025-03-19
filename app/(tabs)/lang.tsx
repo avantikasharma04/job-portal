@@ -4,10 +4,13 @@ import { Mic, AlertCircle, User, Phone, MapPin, Volume2 } from "lucide-react";
 import * as Speech from "expo-speech";
 import { createStackNavigator } from "@react-navigation/stack"
 import HomeScreen from "./home";
-import { useNavigation } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import SignupScreen from "./signup";
 import speechToTextService from '../../src/services/speechToTextService';
 import jobService from '../../src/services/jobService';
+
+const router=useRouter();
+
 
 const Stack = createStackNavigator();
 
@@ -294,7 +297,7 @@ const OnboardingFlow = () => {
 
       // Navigate to home screen on success
       console.log("Final submission successful");
-      navigation.navigate('HomeScreen');
+      router.push("/home")
 
     } catch (error) {
       console.error('Error in final submission:', error);
@@ -431,7 +434,7 @@ const OnboardingFlow = () => {
         ]} 
         onPress={()=>
           {if (userData.userType === "employer") {
-            navigation.navigate("SignupScreen"); // Navigate to employer screen
+            router.push("/signup"); // Navigate to employer screen
           } else if (userData.userType === "employee") {
             setStep("job"); // Navigate to employee screen
           } else {
@@ -729,14 +732,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const HomeScreen1 = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="OnboardingFlow" component={OnboardingFlow} options={{ headerShown: false }} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="SignupScreen" component={SignupScreen} />
-    </Stack.Navigator>
-  );
-};
 
-export default HomeScreen1;
+
+export default OnboardingFlow

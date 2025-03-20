@@ -9,6 +9,12 @@ import SignupScreen from "./signup";
 import speechToTextService from '../../src/services/speechToTextService';
 import jobService from '../../src/services/jobService';
 import { TextInput, Button, Modal } from 'react-native';
+//import auth from '@react-native-firebase/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import '../../src/services/firebaseConfig';
+//import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from '../../src/services/firebaseConfig';
 
 
 const router=useRouter();
@@ -32,14 +38,62 @@ const OnboardingFlow = () => {
   const openPhoneKeypad = () => {
     setPhoneModalVisible(true);
   };
-
+  const [otp, setOtp] = useState('');
+  const [otpModalVisible, setOtpModalVisible] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  
   const isValidPhoneNumber = (phone: string): boolean => {
     // Regular expression for a 10-digit number (adjust as needed)
     const phoneRegex = /^\d{10}$/;
     return phoneRegex.test(phone);
   };
   
-
+  
+const sendOTP = async (phone: string): Promise<any> => {
+  try {
+    const formattedPhone = '+91' + phone;
+    
+    // Create a reCAPTCHA verifier instance using the compat API.
+    // We're explicitly typing the response as string.
+    const recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
+      'recaptcha-container',
+      {
+        size: 'invisible',
+        callback: (response: string) => {
+          console.log("reCAPTCHA solved:", response);
+        },
+        'expired-callback': () => {
+          console.log("reCAPTCHA expired");
+        }
+      }
+    );
+    
+    // Use the compat API's signInWithPhoneNumber method.
+    const confirmation = await auth.signInWithPhoneNumber(formattedPhone, recaptchaVerifier);
+    return confirmation;
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    throw error;
+  }
+};
+  
+  
+  const verifyOTP = async () => {
+    try {
+      if (confirmationResult && otp.length > 0) {
+        const userCredential = await confirmationResult.confirm(otp);
+        console.log('Phone number verified successfully!', userCredential);
+        setOtpModalVisible(false);
+        // Proceed with updating the database or next steps in your app
+      } else {
+        alert('Please enter the OTP.');
+      }
+    } catch (error) {
+      console.error('Invalid OTP:', error);
+      alert('Invalid OTP, please try again.');
+    }
+  };
+  
   // Replace single isSpeaking with an object to track each speaker separately
   const [speakingState, setSpeakingState] = useState({
     language: null, // For language speakers
@@ -543,6 +597,9 @@ const OnboardingFlow = () => {
       {step === "language" && renderLanguageSelection()}
       {step === "details" && renderUserDetails()}
       {step === "job" && renderJobSelection()}
+      <div id="recaptcha-container"></div>
+  
+      {/* Phone Modal */}
       {phoneModalVisible && (
         <Modal
           transparent={true}
@@ -562,22 +619,57 @@ const OnboardingFlow = () => {
                   setUserData((prev) => ({ ...prev, phone: text }))
                 }
               />
-<Button
-  title="Done"
-  onPress={() => {
-    if (!isValidPhoneNumber(userData.phone)) {
-      alert('Please enter a valid 10-digit phone number.');
-      return;
-    }
-    setPhoneModalVisible(false);
-  }}
-/>
+              <Button
+                title="Done"
+                onPress={() => {
+                  if (!isValidPhoneNumber(userData.phone)) {
+                    alert('Please enter a valid 10-digit phone number.');
+                    return;
+                  }
+                  sendOTP(userData.phone)
+                    .then((confirmation) => {
+                      setConfirmationResult(confirmation);
+                      // Open OTP modal after successful OTP sending.
+                      setOtpModalVisible(true);
+                    })
+                    .catch((error) => {
+                      alert('Failed to send OTP. Please try again.');
+                    });
+                  // Close the phone modal.
+                  setPhoneModalVisible(false);
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+  
+      {/* OTP Modal (rendered as a sibling) */}
+      {otpModalVisible && (
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={otpModalVisible}
+          onRequestClose={() => setOtpModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Enter OTP</Text>
+              <TextInput
+                keyboardType="numeric"
+                style={styles.inputField}
+                placeholder="Enter OTP"
+                value={otp}
+                onChangeText={(text) => setOtp(text)}
+              />
+              <Button title="Verify OTP" onPress={verifyOTP} />
             </View>
           </View>
         </Modal>
       )}
     </View>
   );
+  
 };
 
 

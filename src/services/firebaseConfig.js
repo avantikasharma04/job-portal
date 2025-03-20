@@ -1,6 +1,8 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+//import { initializeApp, getApps, getApp } from "firebase/app";
+//import { getAuth } from "firebase/auth";
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 
 // ✅ Firebase Config
 const firebaseConfig = {
@@ -11,11 +13,17 @@ const firebaseConfig = {
   messagingSenderId: "27322884453",
   appId: "1:27322884453:web:03b0629155051dd6a1c18c"
 };
+console.log('Initializing Firebase');
 
-// ✅ Check if Firebase app already exists, if not initialize it
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Use the compat API exclusively.
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+  console.log('Firebase app initialized');
+} else {
+  console.log('Firebase app already initialized');
+}
 
-// ✅ Export Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export default app;
+// Export services using compat APIs.
+export const auth = firebase.auth();
+export const db = firebase.firestore();
+export default firebase;

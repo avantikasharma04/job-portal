@@ -8,6 +8,8 @@ import { useNavigation, useRouter } from "expo-router";
 import SignupScreen from "./signup";
 import speechToTextService from '../../src/services/speechToTextService';
 import jobService from '../../src/services/jobService';
+import { TextInput, Button, Modal } from 'react-native';
+
 
 const router=useRouter();
 
@@ -26,7 +28,18 @@ const OnboardingFlow = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [listeningField, setListeningField] = useState(null);
+  const [phoneModalVisible, setPhoneModalVisible] = useState(false);
+  const openPhoneKeypad = () => {
+    setPhoneModalVisible(true);
+  };
+
+  const isValidPhoneNumber = (phone: string): boolean => {
+    // Regular expression for a 10-digit number (adjust as needed)
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phone);
+  };
   
+
   // Replace single isSpeaking with an object to track each speaker separately
   const [speakingState, setSpeakingState] = useState({
     language: null, // For language speakers
@@ -47,7 +60,7 @@ const OnboardingFlow = () => {
       name: "Name",
       speakName: "Tap mic to speak your name",
       phone: "Phone Number",
-      speakPhone: "Tap mic to speak your phone number",
+      speakPhone: "Tap keypad to enter your phone number",
       location: "Location",
       speakLocation: "Tap mic to speak your location",
       job: "Job",
@@ -72,7 +85,7 @@ const OnboardingFlow = () => {
       name: "नाम",
       speakName: "अपना नाम बोलने के लिए माइक पर टैप करें",
       phone: "फ़ोन नंबर",
-      speakPhone: "अपना फ़ोन नंबर बोलने के लिए माइक पर टैप करें",
+      speakPhone: "अपना फ़ोन नंबर दर्ज करने के लिए कीपैड पर टैप करें",
       location: "स्थान",
       speakLocation: "अपना स्थान बोलने के लिए माइक पर टैप करें",
       job: "नौकरी",
@@ -146,18 +159,18 @@ const OnboardingFlow = () => {
     });
   };
 
-  const playJobDescription = async (job) => {
+  const playJobDescription = (job) => {
     try {
       const description = job.description;
       const language = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
-      
-      // Set only this specific job description as speaking
+  
+      // Set the current job description speaker state
       setSpeakingState(prev => ({
         ...prev,
         jobDescription: job.id
       }));
-      
-      await Speech.speak(description, { 
+  
+      Speech.speak(description, { 
         language,
         onDone: () => setSpeakingState(prev => ({...prev, jobDescription: null})),
         onStopped: () => setSpeakingState(prev => ({...prev, jobDescription: null}))
@@ -167,6 +180,7 @@ const OnboardingFlow = () => {
       console.error('Error playing description:', error);
     }
   };
+  
 
   const handleVoiceInput = async (field) => {
     try {
@@ -355,20 +369,23 @@ const OnboardingFlow = () => {
       </View>
 
       <View style={styles.inputBox}>
-        <Phone size={20} color="#666" />
-        <Text style={styles.inputText}>{getText("speakPhone")}</Text>
-        <View style={styles.inputActions}>
-          <TouchableOpacity 
-            onPress={() => speakText(getText("speakPhone"), "phoneInstructions")} 
-            style={styles.speakerButton}
-          >
-            <Volume2 size={20} color={speakingState.phoneInstructions ? "#007bff" : "#666"} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleVoiceInput("phone")}>
-            <Mic size={20} color={listeningField === "phone" ? "#FF3B30" : "#666"} />
-          </TouchableOpacity>
-        </View>
-      </View>
+  <Phone size={20} color="#666" />
+  <Text style={styles.inputText}>{getText("speakPhone")}</Text>
+  <View style={styles.inputActions}>
+    <TouchableOpacity 
+      onPress={() => speakText(getText("speakPhone"), "phoneInstructions")} 
+      style={styles.speakerButton}
+    >
+      <Volume2 size={20} color={speakingState.phoneInstructions ? "#007bff" : "#666"} />
+    </TouchableOpacity>
+    {/* Keypad button replaces the mic for phone input */}
+    <TouchableOpacity onPress={openPhoneKeypad} style={styles.keypadButton}>
+      <Text style={styles.keypadText}>Keypad</Text>
+    </TouchableOpacity>
+  </View>
+</View>
+
+
 
       <View style={styles.inputBox}>
         <MapPin size={20} color="#666" />
@@ -428,22 +445,23 @@ const OnboardingFlow = () => {
       </View>
 
       <TouchableOpacity 
-        style={[
-          styles.continueButton,
-          !userData.userType && styles.disabledButton
-        ]} 
-        onPress={()=>
-          {if (userData.userType === "employer") {
-            router.push("/signup"); // Navigate to employer screen
-          } else if (userData.userType === "employee") {
-            setStep("job"); // Navigate to employee screen
-          } else {
-            alert("Please select a user type first!");
-          }}
-        }
-      >
-        <Text style={styles.continueText}>{getText("continue")}</Text>
-      </TouchableOpacity>
+  style={[
+    styles.continueButton,
+    !userData.userType && styles.disabledButton
+  ]} 
+  onPress={() => {
+    if (userData.userType === "employer") {
+      router.push("/signup"); // Navigate to employer screen
+    } else if (userData.userType === "employee") {
+      setStep("job"); // Navigate to employee screen
+    } else {
+      alert("Please select a user type first!");
+    }
+  }}
+>
+  <Text style={styles.continueText}>{getText("continue")}</Text>
+</TouchableOpacity>
+
     </View>
   );
 
@@ -525,9 +543,43 @@ const OnboardingFlow = () => {
       {step === "language" && renderLanguageSelection()}
       {step === "details" && renderUserDetails()}
       {step === "job" && renderJobSelection()}
+      {phoneModalVisible && (
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={phoneModalVisible}
+          onRequestClose={() => setPhoneModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Enter Phone Number</Text>
+              <TextInput
+                keyboardType="numeric"
+                style={styles.inputField}
+                placeholder="Phone Number"
+                value={userData.phone}
+                onChangeText={(text) =>
+                  setUserData((prev) => ({ ...prev, phone: text }))
+                }
+              />
+<Button
+  title="Done"
+  onPress={() => {
+    if (!isValidPhoneNumber(userData.phone)) {
+      alert('Please enter a valid 10-digit phone number.');
+      return;
+    }
+    setPhoneModalVisible(false);
+  }}
+/>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -729,6 +781,42 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  keypadButton: {
+    padding: 10,
+    backgroundColor: "#ddd",
+    borderRadius: 4,
+    marginLeft: 10,
+  },
+  keypadText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  inputField: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    width: '100%',
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 20,
   },
 });
 

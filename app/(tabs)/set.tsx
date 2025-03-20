@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+import { AlertCircle } from 'lucide-react';
 import { 
   List, 
   Switch, 
@@ -82,16 +83,17 @@ const SettingsScreen = ({ navigation }) => {
 
         {/* Help Button */}
         <View style={styles.helpButton}>
-          <Button 
-            mode="contained" 
-            icon="help-circle"
-            onPress={() => {
-              speakText('Opening help section');
-              navigation.navigate('Help');
-            }}
-          >
-            Need Help?
-          </Button>
+        <Button 
+  mode="contained" 
+  icon={() => <AlertCircle size={18} color="#333" />} 
+  onPress={() => {
+    speakText('Opening help section');
+    navigation.navigate('Help');
+  }}
+>
+  Help
+</Button>
+
         </View>
 
         {/* Language Selection Dialog */}

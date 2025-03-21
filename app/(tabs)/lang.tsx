@@ -15,6 +15,7 @@ import 'firebase/compat/auth';
 import '../../src/services/firebaseConfig';
 //import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from '../../src/services/firebaseConfig';
+import { ActivityIndicator } from "react-native";
 
 
 const router=useRouter();
@@ -78,26 +79,33 @@ const sendOTP = async (phone: string): Promise<any> => {
 };
   
   
-  const verifyOTP = async () => {
-    try {
-      if (confirmationResult && otp.length > 0) {
-        const userCredential = await confirmationResult.confirm(otp);
-        console.log('Phone number verified successfully!', userCredential);
-        console.log("Current user (raw):", auth.currentUser);
-        console.log("User UID:", auth.currentUser?.uid);
+const verifyOTP = async () => {
+  try {
+    if (confirmationResult && otp.length > 0) {
+      const userCredential = await confirmationResult.confirm(otp);
+      console.log('Phone number verified successfully!', userCredential);
+      console.log("Current user (raw):", auth.currentUser);
+      console.log("User UID:", auth.currentUser?.uid);
       console.log("User phone number:", auth.currentUser?.phoneNumber);
       console.log("Current user (full):", JSON.stringify(auth.currentUser, null, 2));
-        setOtpModalVisible(false);
-        // Proceed with updating the database or next steps in your app
-      } else {
-        alert('Please enter the OTP.');
-      }
-    } catch (error) {
-      console.error('Invalid OTP:', error);
-      alert('Invalid OTP, please try again.');
+
+      // Update the phone number in state with the verified number
+      setUserData((prev) => ({
+        ...prev,
+        phone: auth.currentUser?.phoneNumber || prev.phone,
+      }));
+      
+      setOtpModalVisible(false);
+      // Proceed with further steps, e.g., saving the user profile, navigating to another screen, etc.
+    } else {
+      alert('Please enter the OTP.');
     }
-  };
-  
+  } catch (error) {
+    console.error('Invalid OTP:', error);
+    alert('Invalid OTP, please try again.');
+  }
+};
+
   // Replace single isSpeaking with an object to track each speaker separately
   const [speakingState, setSpeakingState] = useState({
     language: null, // For language speakers
@@ -409,26 +417,39 @@ const sendOTP = async (phone: string): Promise<any> => {
   const renderUserDetails = () => (
     <View>
       <Text style={styles.title}>{getText("aboutYourself")}</Text>
-
       <View style={styles.inputBox}>
-        <User size={20} color="#666" />
-        <Text style={styles.inputText}>{getText("speakName")}</Text>
-        <View style={styles.inputActions}>
-          <TouchableOpacity 
-            onPress={() => speakText(getText("speakName"), "nameInstructions")} 
-            style={styles.speakerButton}
-          >
-            <Volume2 size={20} color={speakingState.nameInstructions ? "#007bff" : "#666"} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleVoiceInput("fieldName")}>
-            <Mic size={20} color={listeningField === "fieldName" ? "#FF3B30" : "#666"} />
-          </TouchableOpacity>
-        </View>
-      </View>
+  <User size={20} color="#666" />
+  <View style={styles.inputContent}>
+    <Text style={[
+      styles.inputText, 
+      listeningField === "name" && { color: "#007bff" } // change text color when listening
+    ]}>
+      {userData.name ? userData.name : getText("speakName")}
+    </Text>
+    {listeningField === "name" && (
+      <ActivityIndicator size="small" color="#007bff" style={styles.loadingIndicator} />
+    )}
+  </View>
+  <View style={styles.inputActions}>
+    <TouchableOpacity 
+      onPress={() => speakText(getText("speakName"), "nameInstructions")} 
+      style={styles.speakerButton}
+    >
+      <Volume2 size={20} color={speakingState.nameInstructions ? "#007bff" : "#666"} />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => handleVoiceInput("name")}>
+      <Mic size={20} color={listeningField === "name" ? "#FF3B30" : "#666"} />
+    </TouchableOpacity>
+  </View>
+</View>
 
-      <View style={styles.inputBox}>
+
+
+<View style={styles.inputBox}>
   <Phone size={20} color="#666" />
-  <Text style={styles.inputText}>{getText("speakPhone")}</Text>
+  <Text style={styles.inputText}>
+    {userData.phone ? userData.phone : getText("speakPhone")}
+  </Text>
   <View style={styles.inputActions}>
     <TouchableOpacity 
       onPress={() => speakText(getText("speakPhone"), "phoneInstructions")} 
@@ -445,21 +466,33 @@ const sendOTP = async (phone: string): Promise<any> => {
 
 
 
-      <View style={styles.inputBox}>
-        <MapPin size={20} color="#666" />
-        <Text style={styles.inputText}>{getText("speakLocation")}</Text>
-        <View style={styles.inputActions}>
-          <TouchableOpacity 
-            onPress={() => speakText(getText("speakLocation"), "locationInstructions")} 
-            style={styles.speakerButton}
-          >
-            <Volume2 size={20} color={speakingState.locationInstructions ? "#007bff" : "#666"} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleVoiceInput("location")}>
-            <Mic size={20} color={listeningField === "location" ? "#FF3B30" : "#666"} />
-          </TouchableOpacity>
-        </View>
-      </View>
+<View style={styles.inputBox}>
+  <MapPin size={20} color="#666" />
+  <View style={styles.inputContent}>
+    <Text style={[
+      styles.inputText,
+      listeningField === "location" && { color: "#007bff" } // Change color when listening
+    ]}>
+      {userData.location ? userData.location : getText("speakLocation")}
+    </Text>
+    {listeningField === "location" && (
+      <ActivityIndicator size="small" color="#007bff" style={styles.loadingIndicator} />
+    )}
+  </View>
+  <View style={styles.inputActions}>
+    <TouchableOpacity 
+      onPress={() => speakText(getText("speakLocation"), "locationInstructions")} 
+      style={styles.speakerButton}
+    >
+      <Volume2 size={20} color={speakingState.locationInstructions ? "#007bff" : "#666"} />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => handleVoiceInput("location")}>
+      <Mic size={20} color={listeningField === "location" ? "#FF3B30" : "#666"} />
+    </TouchableOpacity>
+  </View>
+</View>
+
+
 
       <View style={styles.userTypeContainer}>
         <Text style={styles.userTypeTitle}>{getText("userTypeQuestion")}</Text>
@@ -719,21 +752,6 @@ const styles = StyleSheet.create({
   languageText: {
     fontSize: 16,
   },
-  inputBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
-  },
-  inputText: {
-    flex: 1,
-    fontSize: 16,
-    color: "#666",
-    marginLeft: 10,
-  },
   inputActions: {
     flexDirection: "row",
     alignItems: "center",
@@ -913,6 +931,29 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 10,
     marginBottom: 20,
+  },
+  inputBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+  },
+  inputContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  inputText: {
+    flex: 1,
+    fontSize: 16,
+    color: "#666",
+    marginLeft: 10,
+  },
+  loadingIndicator: {
+    marginLeft: 10,
   },
 });
 

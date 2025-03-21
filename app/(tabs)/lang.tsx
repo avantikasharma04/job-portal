@@ -83,6 +83,10 @@ const sendOTP = async (phone: string): Promise<any> => {
       if (confirmationResult && otp.length > 0) {
         const userCredential = await confirmationResult.confirm(otp);
         console.log('Phone number verified successfully!', userCredential);
+        console.log("Current user (raw):", auth.currentUser);
+        console.log("User UID:", auth.currentUser?.uid);
+      console.log("User phone number:", auth.currentUser?.phoneNumber);
+      console.log("Current user (full):", JSON.stringify(auth.currentUser, null, 2));
         setOtpModalVisible(false);
         // Proceed with updating the database or next steps in your app
       } else {

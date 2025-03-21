@@ -36,16 +36,84 @@ const locations = [
   { id: 5, name: 'Hyderabad' },
 ];
 
+// Sample job postings with Indian names and details
+const sampleJobs: JobType[] = [
+  {
+    id: '1',
+    title: 'House Maid',
+    location: 'Mumbai',
+    salary: '₹10,000/month',
+    type: 'Full-time',
+    requirements: 'Experience in cleaning, cooking, and laundry',
+    description: 'Looking for an experienced house maid for a busy family in Mumbai.',
+    company: 'Sharma Family',
+    postedDate: '3 days ago',
+    applicantCount: 5,
+  },
+  {
+    id: '2',
+    title: 'Cook',
+    location: 'Delhi',
+    salary: '₹12,000/month',
+    type: 'Part-time',
+    requirements: 'Expert in Indian cuisine and dietary restrictions',
+    description: 'We need a skilled cook to prepare healthy meals in Delhi.',
+    company: 'Verma Home',
+    postedDate: '1 day ago',
+    applicantCount: 8,
+  },
+  {
+    id: '3',
+    title: 'Driver',
+    location: 'Bangalore',
+    salary: '₹15,000/month',
+    type: 'Full-time',
+    requirements: 'Clean driving record and knowledge of local routes',
+    description: 'Reliable driver required for daily commute in Bangalore.',
+    company: 'Kumar Transport',
+    postedDate: '5 days ago',
+    applicantCount: 3,
+  },
+  {
+    id: '4',
+    title: 'Nanny',
+    location: 'Chennai',
+    salary: '₹9,000/month',
+    type: 'Full-time',
+    requirements: 'Experience in childcare and early childhood education',
+    description: 'Looking for a nurturing nanny for a family in Chennai.',
+    company: 'Desai Household',
+    postedDate: '2 days ago',
+    applicantCount: 6,
+  },
+  {
+    id: '5',
+    title: 'Gardener',
+    location: 'Hyderabad',
+    salary: '₹8,000/month',
+    type: 'Part-time',
+    requirements: 'Skilled in garden maintenance and landscaping',
+    description: 'Experienced gardener needed for a private estate in Hyderabad.',
+    company: 'Singh Estate',
+    postedDate: '4 days ago',
+    applicantCount: 4,
+  },
+];
+
 const JobListings = ({ navigation }) => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
-  const [jobs, setJobs] = useState<JobType[]>([]);
-  const [filteredJobs, setFilteredJobs] = useState<JobType[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use sampleJobs as initial state instead of empty array
+  const [jobs, setJobs] = useState<JobType[]>(sampleJobs);
+  const [filteredJobs, setFilteredJobs] = useState<JobType[]>(sampleJobs);
+  // Set loading to false since we're using sample data
+  const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Uncomment below if you want to fetch from Firestore
+  /*
   useEffect(() => {
     fetchJobListings();
   }, []);
@@ -57,7 +125,6 @@ const JobListings = ({ navigation }) => {
       const jobList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        // Add some sample data if properties are missing
         description: doc.data().description || 'Looking for an experienced professional to join our team.',
         company: doc.data().company || 'Private Employer',
         postedDate: doc.data().postedDate || '2 days ago',
@@ -68,31 +135,12 @@ const JobListings = ({ navigation }) => {
       setFilteredJobs(jobList);
       setLoading(false);
       console.log("✅ Jobs Fetched Successfully:", jobList);
-      
-      // Simple verification logging
-      console.log("===== JOB LISTINGS VERIFICATION =====");
-      console.log(`Total jobs found: ${jobList.length}`);
-      
-      // Check if current user has posted any jobs
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userJobs = jobList.filter(job => job.employerId === currentUser.uid);
-        console.log(`Jobs posted by current user (${currentUser.uid}): ${userJobs.length}`);
-        
-        if (userJobs.length > 0) {
-          console.log("User's job titles:");
-          userJobs.forEach((job, index) => {
-            console.log(`${index + 1}. ${job.title} (ID: ${job.id})`);
-          });
-        }
-      }
-      
-      console.log("====================================");
     } catch (error) {
       console.error("❌ Error fetching jobs:", error);
       setLoading(false);
     }
   };
+  */
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -105,9 +153,9 @@ const JobListings = ({ navigation }) => {
     if (query) {
       filtered = filtered.filter(
         (job) =>
-        job.title.toLowerCase().includes(query.toLowerCase()) ||
-        job.location.toLowerCase().includes(query.toLowerCase()) ||
-        job.requirements.toLowerCase().includes(query.toLowerCase())
+          job.title.toLowerCase().includes(query.toLowerCase()) ||
+          job.location.toLowerCase().includes(query.toLowerCase()) ||
+          job.requirements.toLowerCase().includes(query.toLowerCase())
       );
     }
     
@@ -295,10 +343,7 @@ const JobListings = ({ navigation }) => {
                         <IconButton icon="currency-inr" size={18} color="#0D47A1" style={styles.detailIcon} />
                         <Text style={styles.salaryText}>{item.salary}</Text>
                       </View>
-                      <Chip 
-                        style={styles.applicantsChip}
-                        textStyle={styles.applicantsText}
-                      >
+                      <Chip style={styles.applicantsChip} textStyle={styles.applicantsText}>
                         {item.applicantCount} applicants
                       </Chip>
                     </View>

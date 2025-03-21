@@ -8,6 +8,14 @@ import { useNavigation, useRouter } from "expo-router";
 import SignupScreen from "./signup";
 import speechToTextService from '../../src/services/speechToTextService';
 import jobService from '../../src/services/jobService';
+import { TextInput, Button, Modal } from 'react-native';
+//import auth from '@react-native-firebase/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import '../../src/services/firebaseConfig';
+//import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from '../../src/services/firebaseConfig';
+
 
 const router=useRouter();
 
@@ -26,6 +34,69 @@ const OnboardingFlow = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [listeningField, setListeningField] = useState(null);
+  const [phoneModalVisible, setPhoneModalVisible] = useState(false);
+  const openPhoneKeypad = () => {
+    setPhoneModalVisible(true);
+  };
+  const [otp, setOtp] = useState('');
+  const [otpModalVisible, setOtpModalVisible] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  
+  const isValidPhoneNumber = (phone: string): boolean => {
+    // Regular expression for a 10-digit number (adjust as needed)
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phone);
+  };
+  
+  
+const sendOTP = async (phone: string): Promise<any> => {
+  try {
+    const formattedPhone = '+91' + phone;
+    
+    // Create a reCAPTCHA verifier instance using the compat API.
+    // We're explicitly typing the response as string.
+    const recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
+      'recaptcha-container',
+      {
+        size: 'invisible',
+        callback: (response: string) => {
+          console.log("reCAPTCHA solved:", response);
+        },
+        'expired-callback': () => {
+          console.log("reCAPTCHA expired");
+        }
+      }
+    );
+    
+    // Use the compat API's signInWithPhoneNumber method.
+    const confirmation = await auth.signInWithPhoneNumber(formattedPhone, recaptchaVerifier);
+    return confirmation;
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    throw error;
+  }
+};
+  
+  
+  const verifyOTP = async () => {
+    try {
+      if (confirmationResult && otp.length > 0) {
+        const userCredential = await confirmationResult.confirm(otp);
+        console.log('Phone number verified successfully!', userCredential);
+        console.log("Current user (raw):", auth.currentUser);
+        console.log("User UID:", auth.currentUser?.uid);
+      console.log("User phone number:", auth.currentUser?.phoneNumber);
+      console.log("Current user (full):", JSON.stringify(auth.currentUser, null, 2));
+        setOtpModalVisible(false);
+        // Proceed with updating the database or next steps in your app
+      } else {
+        alert('Please enter the OTP.');
+      }
+    } catch (error) {
+      console.error('Invalid OTP:', error);
+      alert('Invalid OTP, please try again.');
+    }
+  };
   
   // Replace single isSpeaking with an object to track each speaker separately
   const [speakingState, setSpeakingState] = useState({
@@ -47,7 +118,7 @@ const OnboardingFlow = () => {
       name: "Name",
       speakName: "Tap mic to speak your name",
       phone: "Phone Number",
-      speakPhone: "Tap mic to speak your phone number",
+      speakPhone: "Tap keypad to enter your phone number",
       location: "Location",
       speakLocation: "Tap mic to speak your location",
       job: "Job",
@@ -72,7 +143,7 @@ const OnboardingFlow = () => {
       name: "नाम",
       speakName: "अपना नाम बोलने के लिए माइक पर टैप करें",
       phone: "फ़ोन नंबर",
-      speakPhone: "अपना फ़ोन नंबर बोलने के लिए माइक पर टैप करें",
+      speakPhone: "अपना फ़ोन नंबर दर्ज करने के लिए कीपैड पर टैप करें",
       location: "स्थान",
       speakLocation: "अपना स्थान बोलने के लिए माइक पर टैप करें",
       job: "नौकरी",
@@ -146,18 +217,18 @@ const OnboardingFlow = () => {
     });
   };
 
-  const playJobDescription = async (job) => {
+  const playJobDescription = (job) => {
     try {
       const description = job.description;
       const language = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
-      
-      // Set only this specific job description as speaking
+  
+      // Set the current job description speaker state
       setSpeakingState(prev => ({
         ...prev,
         jobDescription: job.id
       }));
-      
-      await Speech.speak(description, { 
+  
+      Speech.speak(description, { 
         language,
         onDone: () => setSpeakingState(prev => ({...prev, jobDescription: null})),
         onStopped: () => setSpeakingState(prev => ({...prev, jobDescription: null}))
@@ -167,6 +238,7 @@ const OnboardingFlow = () => {
       console.error('Error playing description:', error);
     }
   };
+  
 
   const handleVoiceInput = async (field) => {
     try {
@@ -355,20 +427,23 @@ const OnboardingFlow = () => {
       </View>
 
       <View style={styles.inputBox}>
-        <Phone size={20} color="#666" />
-        <Text style={styles.inputText}>{getText("speakPhone")}</Text>
-        <View style={styles.inputActions}>
-          <TouchableOpacity 
-            onPress={() => speakText(getText("speakPhone"), "phoneInstructions")} 
-            style={styles.speakerButton}
-          >
-            <Volume2 size={20} color={speakingState.phoneInstructions ? "#007bff" : "#666"} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleVoiceInput("phone")}>
-            <Mic size={20} color={listeningField === "phone" ? "#FF3B30" : "#666"} />
-          </TouchableOpacity>
-        </View>
-      </View>
+  <Phone size={20} color="#666" />
+  <Text style={styles.inputText}>{getText("speakPhone")}</Text>
+  <View style={styles.inputActions}>
+    <TouchableOpacity 
+      onPress={() => speakText(getText("speakPhone"), "phoneInstructions")} 
+      style={styles.speakerButton}
+    >
+      <Volume2 size={20} color={speakingState.phoneInstructions ? "#007bff" : "#666"} />
+    </TouchableOpacity>
+    {/* Keypad button replaces the mic for phone input */}
+    <TouchableOpacity onPress={openPhoneKeypad} style={styles.keypadButton}>
+      <Text style={styles.keypadText}>Keypad</Text>
+    </TouchableOpacity>
+  </View>
+</View>
+
+
 
       <View style={styles.inputBox}>
         <MapPin size={20} color="#666" />
@@ -428,22 +503,23 @@ const OnboardingFlow = () => {
       </View>
 
       <TouchableOpacity 
-        style={[
-          styles.continueButton,
-          !userData.userType && styles.disabledButton
-        ]} 
-        onPress={()=>
-          {if (userData.userType === "employer") {
-            router.push("/signup"); // Navigate to employer screen
-          } else if (userData.userType === "employee") {
-            setStep("job"); // Navigate to employee screen
-          } else {
-            alert("Please select a user type first!");
-          }}
-        }
-      >
-        <Text style={styles.continueText}>{getText("continue")}</Text>
-      </TouchableOpacity>
+  style={[
+    styles.continueButton,
+    !userData.userType && styles.disabledButton
+  ]} 
+  onPress={() => {
+    if (userData.userType === "employer") {
+      router.push("/signup"); // Navigate to employer screen
+    } else if (userData.userType === "employee") {
+      setStep("job"); // Navigate to employee screen
+    } else {
+      alert("Please select a user type first!");
+    }
+  }}
+>
+  <Text style={styles.continueText}>{getText("continue")}</Text>
+</TouchableOpacity>
+
     </View>
   );
 
@@ -525,9 +601,81 @@ const OnboardingFlow = () => {
       {step === "language" && renderLanguageSelection()}
       {step === "details" && renderUserDetails()}
       {step === "job" && renderJobSelection()}
+      <div id="recaptcha-container"></div>
+  
+      {/* Phone Modal */}
+      {phoneModalVisible && (
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={phoneModalVisible}
+          onRequestClose={() => setPhoneModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Enter Phone Number</Text>
+              <TextInput
+                keyboardType="numeric"
+                style={styles.inputField}
+                placeholder="Phone Number"
+                value={userData.phone}
+                onChangeText={(text) =>
+                  setUserData((prev) => ({ ...prev, phone: text }))
+                }
+              />
+              <Button
+                title="Done"
+                onPress={() => {
+                  if (!isValidPhoneNumber(userData.phone)) {
+                    alert('Please enter a valid 10-digit phone number.');
+                    return;
+                  }
+                  sendOTP(userData.phone)
+                    .then((confirmation) => {
+                      setConfirmationResult(confirmation);
+                      // Open OTP modal after successful OTP sending.
+                      setOtpModalVisible(true);
+                    })
+                    .catch((error) => {
+                      alert('Failed to send OTP. Please try again.');
+                    });
+                  // Close the phone modal.
+                  setPhoneModalVisible(false);
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+  
+      {/* OTP Modal (rendered as a sibling) */}
+      {otpModalVisible && (
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={otpModalVisible}
+          onRequestClose={() => setOtpModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Enter OTP</Text>
+              <TextInput
+                keyboardType="numeric"
+                style={styles.inputField}
+                placeholder="Enter OTP"
+                value={otp}
+                onChangeText={(text) => setOtp(text)}
+              />
+              <Button title="Verify OTP" onPress={verifyOTP} />
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
+  
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -729,6 +877,42 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  keypadButton: {
+    padding: 10,
+    backgroundColor: "#ddd",
+    borderRadius: 4,
+    marginLeft: 10,
+  },
+  keypadText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  inputField: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    width: '100%',
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 20,
   },
 });
 

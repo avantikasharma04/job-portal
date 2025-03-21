@@ -9,6 +9,8 @@ import SettingsScreen from './set';
 import { createStackNavigator } from "@react-navigation/stack"
 import Bell from './bell';
 import { useNavigation, useRouter } from 'expo-router';
+import LogoutButton from './LogoutButton';
+
 
 const router = useRouter()
 
@@ -42,6 +44,7 @@ const HomeScreen = () => {
           subtitle="Find Your Dream Job"
         />
         <Appbar.Action icon="bell" onPress={() => router.push("bell")} />
+        <LogoutButton />
       </Appbar.Header>
       
       <BottomNavigation

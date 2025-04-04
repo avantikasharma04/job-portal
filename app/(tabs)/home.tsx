@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, Text, Image, TextInput, StyleSheet, Dimensions,Button } from 'react-native';
+import { View, ScrollView, Text, Image, TextInput, StyleSheet, Dimensions, Button } from 'react-native';
 import { Appbar, Card, BottomNavigation, IconButton, Surface, List } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import SettingsScreen from './set';
 import { createStackNavigator } from "@react-navigation/stack"
 import Bell from './bell';
 import { useNavigation, useRouter } from 'expo-router';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const router = useRouter()
 
@@ -16,14 +17,14 @@ const { width } = Dimensions.get('window');
 const Stack = createStackNavigator();
 
 const HomeScreen = () => {
-  const navigation=useNavigation()
+  const navigation = useNavigation()
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     { key: 'home', title: 'Home', icon: 'home' },
     { key: 'jobs', title: 'Jobs', icon: 'briefcase' },
-    { key: 'profile', title: 'Profile', icon: 'account' },
-    { key: 'more', title: 'More', icon: 'dots-horizontal' },
+    { key: 'profile', title: 'Profile', icon: 'user' },
+    { key: 'more', title: 'More', icon: 'bars' },
   ]);
 
   const renderScene = BottomNavigation.SceneMap({
@@ -32,6 +33,7 @@ const HomeScreen = () => {
     profile: () => < Profile/>, 
     more: () => <SettingsScreen />, 
   });
+
 
   return (
     <View style={styles.container}>
@@ -48,8 +50,10 @@ const HomeScreen = () => {
         navigationState={{ index, routes }}
         onIndexChange={setIndex}
         renderScene={renderScene}
+        renderIcon={({ route, focused, color }) => (
+          <Icon name={route.icon} size={24} color={color} />
+        )}
         barStyle={styles.bottomNav}
-        activeColor="#1e88e5"
       />
     </View>
   );
@@ -313,7 +317,5 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 });
-
-
 
 export default HomeScreen;

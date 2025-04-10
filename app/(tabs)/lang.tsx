@@ -172,7 +172,7 @@ const verifyOTP = async () => {
   };
 
   const languages = [
-    { id: "hi", name: "हिंदी (Hindi)", voice: "hi-IN" },
+    { id: "hi", name: "हिंदी", voice: "hi-IN" },
     { id: "en", name: "English", voice: "en-US" },
   ];
 

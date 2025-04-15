@@ -1,12 +1,13 @@
-// LogoutButton.tsx
 import React from 'react';
 import { Button, View } from 'react-native';
-import { auth } from '../../src/services/firebaseConfig'; // Adjust path as needed
+import { useAuth } from '../../src/context/AuthContext'; // Adjust the path as needed
 
 const LogoutButton = () => {
+  const { logout } = useAuth();
+
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      await logout();
       console.log("User signed out successfully.");
     } catch (error) {
       console.error("Error signing out:", error);

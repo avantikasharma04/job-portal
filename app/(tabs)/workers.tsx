@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, StatusBar } from 'react-native';
 import { Appbar, Card, Title, Button, Searchbar, Chip, IconButton, Avatar, Divider, Badge } from 'react-native-paper';
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../src/services/firebaseConfig";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { db } from "../../src/services/firebaseConfig";
+import { collection, getDocs } from 'firebase/firestore';
+import WorkerService from '../../src/services/workerService';
 
 const workerCategories = [
   { id: 1, title: 'Maid', icon: 'broom' },
@@ -33,8 +34,10 @@ export type WorkerType = {
   availability: string;
   hourlyRate: string;
   bio: string;
+  language?: string; // Added language field
 };
 
+// Fallback sample data in case Firestore has no data
 const sampleWorkers: WorkerType[] = [
   {
     id: '1',
@@ -46,7 +49,8 @@ const sampleWorkers: WorkerType[] = [
     rating: 4.8,
     availability: 'Full-time',
     hourlyRate: '₹150/hour',
-    bio: 'Experienced house help with expertise in cleaning, cooking, and laundry. Worked with 5 families in Mumbai over the last 5 years.'
+    bio: 'Experienced house help with expertise in cleaning, cooking, and laundry. Worked with 5 families in Mumbai over the last 5 years.',
+    language: 'English'
   },
   {
     id: '2',
@@ -58,70 +62,24 @@ const sampleWorkers: WorkerType[] = [
     rating: 4.9,
     availability: 'Part-time',
     hourlyRate: '₹200/hour',
-    bio: 'Professional driver with a clean record. Experienced in both city driving and long trips.'
+    bio: 'Professional driver with a clean record. Experienced in both city driving and long trips.',
+    language: 'Hindi'
   },
-  {
-    id: '3',
-    name: 'Meena Patel',
-    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-    location: 'Bangalore',
-    skills: ['Childcare', 'Teaching', 'Cooking'],
-    experience: '4 years',
-    rating: 4.7,
-    availability: 'Full-time',
-    hourlyRate: '₹180/hour',
-    bio: 'Qualified nanny with early childhood education background. Excellent with kids of all ages.'
-  },
-  {
-    id: '4',
-    name: 'Sanjay Kumar',
-    avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-    location: 'Mumbai',
-    skills: ['Gardening', 'Landscaping'],
-    experience: '8 years',
-    rating: 4.6,
-    availability: 'Weekends',
-    hourlyRate: '₹250/hour',
-    bio: 'Experienced gardener specializing in sustainable practices and native plants.'
-  },
-  {
-    id: '5',
-    name: 'Anita Desai',
-    avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
-    location: 'Chennai',
-    skills: ['Cleaning', 'Elderly Care'],
-    experience: '6 years',
-    rating: 4.9,
-    availability: 'Full-time',
-    hourlyRate: '₹170/hour',
-    bio: 'Specialized in elder care and household cleaning. Patient, compassionate, and detail-oriented.'
-  },
-  {
-    id: '6',
-    name: 'Vikram Singh',
-    avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-    location: 'Hyderabad',
-    skills: ['Repairs', 'Plumbing', 'Electrical'],
-    experience: '10 years',
-    rating: 4.8,
-    availability: 'On-call',
-    hourlyRate: '₹300/hour',
-    bio: 'Handyman experienced in household repairs, plumbing, and electrical work. Efficient in most household issues.'
-  },
+  // ... other sample workers
 ];
 
 const Workers = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
-  const [workers, setWorkers] = useState<WorkerType[]>(sampleWorkers);
-  const [filteredWorkers, setFilteredWorkers] = useState<WorkerType[]>(sampleWorkers);
-  const [loading, setLoading] = useState(false);
-  const [selectedWorker, setSelectedWorker] = useState<WorkerType | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [workers, setWorkers] = useState([]);
+  const [filteredWorkers, setFilteredWorkers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedWorker, setSelectedWorker] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Uncomment the following useEffect to fetch from Firestore when ready.
-  /*
+  // Fetch workers data from Firestore on component mount
   useEffect(() => {
     fetchWorkers();
   }, []);
@@ -129,29 +87,53 @@ const Workers = ({ navigation }) => {
   const fetchWorkers = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, "workers"));
-      const workerList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as WorkerType[];
-      setWorkers(workerList);
-      setFilteredWorkers(workerList);
-      console.log("Workers fetched successfully:", workerList);
+      const result = await WorkerService.getWorkerProfiles();
+      
+      if (result.success && result.workers.length > 0) {
+        // Map worker data to your component's expected format
+        const workerList = result.workers.map(data => ({
+          id: data.id,
+          name: data.name || 'Unknown',
+          avatar: data.profilePicture || 'https://randomuser.me/api/portraits/lego/1.jpg',
+          location: data.location || 'Unknown',
+          skills: data.skills || [],
+          experience: data.experience || 'New',
+          rating: data.rating || 0,
+          availability: data.availability || 'Not specified',
+          hourlyRate: data.hourlyRate || '₹0/hour',
+          bio: data.bio || 'No information provided',
+          language: data.language || 'English'
+        }));
+        
+        console.log("Workers fetched successfully:", workerList);
+        setWorkers(workerList);
+        setFilteredWorkers(workerList);
+      } else {
+        console.log("No workers found in database, using sample data");
+        setWorkers(sampleWorkers);
+        setFilteredWorkers(sampleWorkers);
+      }
+      
+      setError(null);
     } catch (error) {
       console.error("Error fetching workers:", error);
+      setError("Failed to load workers. Please try again later.");
+      // Fallback to sample data if error occurs
+      setWorkers(sampleWorkers);
+      setFilteredWorkers(sampleWorkers);
     } finally {
       setLoading(false);
     }
   };
-  */
 
-  const handleSearch = (query: string) => {
+  const handleSearch = (query) => {
     setSearchQuery(query);
     filterWorkers(query, selectedCategory, selectedLocation);
   };
 
-  const filterWorkers = (query: string, categoryId: number | null, locationId: number | null) => {
+  const filterWorkers = (query, categoryId, locationId) => {
     let filtered = [...workers];
+    
     if (query) {
       filtered = filtered.filter(
         worker =>
@@ -159,16 +141,19 @@ const Workers = ({ navigation }) => {
           worker.skills.some(skill => skill.toLowerCase().includes(query.toLowerCase()))
       );
     }
+    
     if (categoryId) {
       const categoryTitle = workerCategories.find(cat => cat.id === categoryId)?.title.toLowerCase();
       filtered = filtered.filter(worker =>
         worker.skills.some(skill => skill.toLowerCase().includes(categoryTitle || ''))
       );
     }
+    
     if (locationId) {
       const locationName = locations.find(loc => loc.id === locationId)?.name;
       filtered = filtered.filter(worker => worker.location === locationName);
     }
+    
     setFilteredWorkers(filtered);
   };
 
@@ -183,7 +168,7 @@ const Workers = ({ navigation }) => {
     setFilteredWorkers(workers);
   };
 
-  const handleSelectWorker = (worker: WorkerType) => {
+  const handleSelectWorker = (worker) => {
     setSelectedWorker(worker);
   };
 
@@ -194,7 +179,7 @@ const Workers = ({ navigation }) => {
     }
   };
 
-  const renderStars = (rating: number) => {
+  const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating - fullStars >= 0.5;
     
@@ -222,6 +207,7 @@ const Workers = ({ navigation }) => {
         <Appbar.BackAction color="#FFFFFF" onPress={() => navigation?.goBack()} />
         <Appbar.Content title="Find Workers" titleStyle={styles.navbarTitle} />
         <Appbar.Action icon="tune" color="#FFFFFF" onPress={toggleFilters} />
+        <Appbar.Action icon="refresh" color="#FFFFFF" onPress={fetchWorkers} />
       </Appbar.Header>
 
       <View style={styles.searchContainer}>
@@ -309,6 +295,19 @@ const Workers = ({ navigation }) => {
             <ActivityIndicator size="large" color="#3F51B5" />
             <Text style={styles.loaderText}>Finding the best workers for you...</Text>
           </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <IconButton icon="alert-circle-outline" size={48} color="#F44336" />
+            <Text style={styles.errorText}>{error}</Text>
+            <Button 
+              mode="contained" 
+              onPress={fetchWorkers} 
+              style={styles.retryButton}
+              color="#3F51B5"
+            >
+              Retry
+            </Button>
+          </View>
         ) : filteredWorkers.length === 0 ? (
           <View style={styles.noResultsContainer}>
             <IconButton icon="alert-circle-outline" size={48} color="#9E9E9E" />
@@ -347,6 +346,15 @@ const Workers = ({ navigation }) => {
                           />
                           <View style={styles.nameContainer}>
                             <Title style={styles.workerName}>{item.name}</Title>
+                            <View style={styles.languageChipContainer}>
+                              <Chip 
+                                icon="translate" 
+                                style={styles.languageChip}
+                                textStyle={styles.languageChipText}
+                              >
+                                {item.language || 'Unknown'}
+                              </Chip>
+                            </View>
                             {renderStars(item.rating)}
                           </View>
                         </View>
@@ -401,6 +409,13 @@ const Workers = ({ navigation }) => {
                       <Avatar.Image size={90} source={{ uri: selectedWorker.avatar }} style={styles.detailsAvatar} />
                       <View style={styles.detailsNameContainer}>
                         <Title style={styles.detailsName}>{selectedWorker.name}</Title>
+                        <Chip 
+                          icon="translate" 
+                          style={styles.detailsLanguageChip}
+                          textStyle={styles.detailsLanguageText}
+                        >
+                          {selectedWorker.language || 'Unknown'}
+                        </Chip>
                         {renderStars(selectedWorker.rating)}
                         <Chip 
                           icon="check-circle" 
@@ -502,7 +517,6 @@ const Workers = ({ navigation }) => {
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

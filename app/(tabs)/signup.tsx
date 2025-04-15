@@ -1,18 +1,15 @@
+// app/employer/signup.tsx (example path)
+
 import React, { useState } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
-import { TextInput, Button, Text, RadioButton, Checkbox, Surface, Provider as PaperProvider } from "react-native-paper";
-import { createStackNavigator } from "@react-navigation/stack"
-import { useNavigation } from 'expo-router';
-import AuthScreen from './login';
+import { TextInput, Button, Text, RadioButton, Checkbox, Surface } from "react-native-paper";
 import { useRouter } from 'expo-router';
-
-const router = useRouter()
-
-const Stack = createStackNavigator();
-
+import { auth, db } from "../../src/services/firebaseConfig";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 const SignupScreen = () => {
-  const navigation=useNavigation()
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -20,129 +17,94 @@ const SignupScreen = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [address, setAddress] = useState("");
-  const [gender, setGender] = useState("male"); // Default selection
+  const [gender, setGender] = useState("male");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     setError("");
     setMessage("");
+    setLoading(true);
 
-    if (!termsAccepted) {
-      setError("⚠️ You must accept the terms and conditions.");
-      return;
+    try {
+      if (!termsAccepted) {
+        setError("⚠️ You must accept the terms and conditions.");
+        setLoading(false);
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setError("⚠️ Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+
+      if (!email || !password || !name || !phone || !address) {
+        setError("⚠️ All fields are required.");
+        setLoading(false);
+        return;
+      }
+
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        name,
+        phone,
+        email,
+        address,
+        gender,
+        userType: "employer",
+        createdAt: new Date(),
+      });
+
+      setMessage("✅ Signup Successful!");
+      router.push("/jobpost");
+    } catch (error) {
+      console.error("Error during signup:", error);
+      setError(`⚠️ ${error.message || "Failed to create account. Please try again."}`);
+    } finally {
+      setLoading(false);
     }
-
-    if (password !== confirmPassword) {
-      setError("⚠️ Passwords do not match.");
-      return;
-    }
-
-    setMessage("✅ Signup Successful!");
   };
 
   return (
-    <PaperProvider>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Surface style={styles.formCard}>
-          <Text style={styles.title}>Sign Up</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Surface style={styles.formCard}>
+        <Text style={styles.title}>Sign Up as Employer</Text>
 
-          <TextInput
-            label="Full Name"
-            value={name}
-            onChangeText={setName}
-            mode="outlined"
-            style={styles.input}
-          />
+        <TextInput label="Full Name" value={name} onChangeText={setName} mode="outlined" style={styles.input} />
+        <TextInput label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" mode="outlined" style={styles.input} />
+        <TextInput label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" mode="outlined" style={styles.input} />
+        <TextInput label="Password" value={password} onChangeText={setPassword} secureTextEntry mode="outlined" style={styles.input} />
+        <TextInput label="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry mode="outlined" style={styles.input} />
+        <TextInput label="Address" value={address} onChangeText={setAddress} mode="outlined" style={styles.input} />
 
-          <TextInput
-            label="Phone"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            mode="outlined"
-            style={styles.input}
-          />
+        <Text style={styles.label}>Select Gender:</Text>
+        <View style={styles.radioContainer}>
+          <RadioButton.Item label="Male" value="male" status={gender === "male" ? "checked" : "unchecked"} onPress={() => setGender("male")} />
+          <RadioButton.Item label="Female" value="female" status={gender === "female" ? "checked" : "unchecked"} onPress={() => setGender("female")} />
+          <RadioButton.Item label="Other" value="other" status={gender === "other" ? "checked" : "unchecked"} onPress={() => setGender("other")} />
+        </View>
 
-          <TextInput
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            mode="outlined"
-            style={styles.input}
-          />
+        <View style={styles.checkboxContainer}>
+          <Checkbox status={termsAccepted ? "checked" : "unchecked"} onPress={() => setTermsAccepted(!termsAccepted)} />
+          <Text onPress={() => setTermsAccepted(!termsAccepted)} style={styles.checkboxText}>
+            I accept the Terms & Conditions
+          </Text>
+        </View>
 
-          <TextInput
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            mode="outlined"
-            style={styles.input}
-          />
+        <Button mode="contained" onPress={handleSignup} style={styles.button} loading={loading} disabled={loading}>
+          {loading ? "Creating Account..." : "Sign Up"}
+        </Button>
 
-          <TextInput
-            label="Confirm Password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            mode="outlined"
-            style={styles.input}
-          />
-
-          <TextInput
-            label="Address"
-            value={address}
-            onChangeText={setAddress}
-            mode="outlined"
-            style={styles.input}
-          />
-
-          {/* Gender Selection */}
-          <Text style={styles.label}>Select Gender:</Text>
-          <View style={styles.radioContainer}>
-            <RadioButton.Item
-              label="Male"
-              value="male"
-              status={gender === "male" ? "checked" : "unchecked"}
-              onPress={() => setGender("male")}
-            />
-            <RadioButton.Item
-              label="Female"
-              value="female"
-              status={gender === "female" ? "checked" : "unchecked"}
-              onPress={() => setGender("female")}
-            />
-            <RadioButton.Item
-              label="Other"
-              value="other"
-              status={gender === "other" ? "checked" : "unchecked"}
-              onPress={() => setGender("other")}
-            />
-          </View>
-
-          {/* Terms & Conditions Checkbox */}
-          <View style={styles.checkboxContainer}>
-            <Checkbox
-              status={termsAccepted ? "checked" : "unchecked"}
-              onPress={() => setTermsAccepted(!termsAccepted)}
-            />
-            <Text onPress={() => setTermsAccepted(!termsAccepted)} style={styles.checkboxText}>
-              I accept the Terms & Conditions
-            </Text>
-          </View>
-
-          <Button mode="contained" onPress={() => router.push("/login")} style={styles.button}>
-            Sign Up
-          </Button>
-
-          {message ? <Text style={styles.successText}>{message}</Text> : null}
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        </Surface>
-      </ScrollView>
-    </PaperProvider>
+        {message ? <Text style={styles.successText}>{message}</Text> : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </Surface>
+    </ScrollView>
   );
 };
 
@@ -203,7 +165,4 @@ const styles = StyleSheet.create({
   },
 });
 
-
 export default SignupScreen;
-
-

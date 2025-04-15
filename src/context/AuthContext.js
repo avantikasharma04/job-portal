@@ -1,88 +1,142 @@
-import { createContext, useState, useEffect } from "react";
-import { auth, db } from "../services/firebaseConfig";
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { Platform } from 'react-native';
+import { auth, db } from '../services/firebaseConfig';
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  onAuthStateChanged,
   signOut,
-  onAuthStateChanged
-} from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+  PhoneAuthProvider,
+  signInWithCredential
+} from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import * as SecureStore from 'expo-secure-store';
 
-export const AuthContext = createContext();
+// Create a helper function to delete user data based on the platform
+const deleteUserSecurely = async (key) => {
+  if (Platform.OS === 'web') {
+    // When running on the web, use localStorage
+    localStorage.removeItem(key);
+  } else {
+    // On native (iOS/Android), use SecureStore
+    await SecureStore.deleteItemAsync(key);
+  }
+};
+
+// Create context with null default
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        setUser(userDoc.exists() ? { ...currentUser, ...userDoc.data() } : currentUser);
+    const bootstrapAsync = async () => {
+      try {
+        const userJson = await SecureStore.getItemAsync('user');
+        if (userJson) {
+          setUserData(JSON.parse(userJson));
+        }
+      } catch (e) {
+        console.log('Failed to load user from storage', e);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            const userProfile = userDoc.data();
+            setUser(firebaseUser);
+            setUserData(userProfile);
+            await SecureStore.setItemAsync('user', JSON.stringify(userProfile));
+          } else {
+            console.log('No user document found!');
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
       } else {
         setUser(null);
+        setUserData(null);
+        // Use our helper function here
+        await deleteUserSecurely('user');
       }
       setLoading(false);
     });
+
+    bootstrapAsync();
     return unsubscribe;
   }, []);
 
-  // ✅ User Signup Function
-  const signUp = async (email, password, name, phone, role) => {
+  const login = async (email, password) => {
+    setError(null);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // ✅ Store user in Firestore (common "users" collection)
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        name,
-        email,
-        phone,
-        role,
-        createdAt: new Date(),
-      });
-
-      // ✅ Store in role-specific collection
-      if (role === "employer") {
-        await setDoc(doc(db, "employerProfile", user.uid), { name, email, phone });
-      } else {
-        await setDoc(doc(db, "jobSeekerProfile", user.uid), { name, email, phone });
-      }
-
-      console.log("✅ User signed up and stored in Firestore.");
-      return user;
-    } catch (error) {
-      console.error("❌ Signup error:", error.message);
-      throw error;
-    }
-  };
-
-  // ✅ User Login Function
-  const signIn = async (email, password) => {
-    try {
+      setLoading(true);
       await signInWithEmailAndPassword(auth, email, password);
-      console.log("✅ User logged in.");
-    } catch (error) {
-      console.error("❌ Login error:", error.message);
-      throw error;
+      return true;
+    } catch (e) {
+      console.error('Login error:', e);
+      setError(e.message);
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ✅ User Logout Function
-  const logOut = async () => {
+  const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null);
-      console.log("✅ User logged out.");
-    } catch (error) {
-      console.error("❌ Logout error:", error.message);
+      // Use our helper function here as well
+      await deleteUserSecurely('user');
+      return true;
+    } catch (e) {
+      setError(e.message);
+      return false;
+    }
+  };
+
+  const loginWithPhone = async (phoneNumber, verificationId, verificationCode) => {
+    try {
+      setLoading(true);
+      const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
+      await signInWithCredential(auth, credential);
+      return true;
+    } catch (e) {
+      console.error('Phone login error:', e);
+      setError(e.message);
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, signUp, signIn, logOut, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        userData,
+        loading,
+        error,
+        login,
+        logout,
+        loginWithPhone,
+        setError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

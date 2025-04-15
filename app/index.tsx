@@ -28,8 +28,8 @@ const AuthWrapper = () => {
     );
   }
 
-  // If a user is logged in, redirect to home; otherwise, redirect to onboarding (lang)
-  return user ? <Redirect href="/home" /> : <Redirect href="/lang" />;
+  // If a user is logged in, redirect to home; otherwise, redirect to login
+  return user ? <Redirect href="/home" /> : <Redirect href="/login" />;
 };
 
 export default AuthWrapper;

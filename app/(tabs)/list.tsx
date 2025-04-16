@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, StatusBar } from 'react-native';
 import { Appbar, Card, Title, Button, Searchbar, Chip, IconButton, Avatar, Divider, Badge } from 'react-native-paper';
-import { collection, getDocs } from "firebase/firestore";
-import { db, auth } from "../../src/services/firebaseConfig";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import JobService from '../../src/services/jobService'; // Import your JobService
 
 type JobType = {
   id: string;
   title: string;
   location: string;
   salary: string;
-  type: string;
+  type?: string;
   requirements: string;
   employerId?: string;
   description?: string;
   company?: string;
   postedDate?: string;
   applicantCount?: number;
+  createdAt?: any;
 };
 
 const jobCategories = [
@@ -36,111 +36,81 @@ const locations = [
   { id: 5, name: 'Hyderabad' },
 ];
 
-// Sample job postings with Indian names and details
-const sampleJobs: JobType[] = [
-  {
-    id: '1',
-    title: 'House Maid',
-    location: 'Mumbai',
-    salary: '₹10,000/month',
-    type: 'Full-time',
-    requirements: 'Experience in cleaning, cooking, and laundry',
-    description: 'Looking for an experienced house maid for a busy family in Mumbai.',
-    company: 'Sharma Family',
-    postedDate: '3 days ago',
-    applicantCount: 5,
-  },
-  {
-    id: '2',
-    title: 'Cook',
-    location: 'Delhi',
-    salary: '₹12,000/month',
-    type: 'Part-time',
-    requirements: 'Expert in Indian cuisine and dietary restrictions',
-    description: 'We need a skilled cook to prepare healthy meals in Delhi.',
-    company: 'Verma Home',
-    postedDate: '1 day ago',
-    applicantCount: 8,
-  },
-  {
-    id: '3',
-    title: 'Driver',
-    location: 'Bangalore',
-    salary: '₹15,000/month',
-    type: 'Full-time',
-    requirements: 'Clean driving record and knowledge of local routes',
-    description: 'Reliable driver required for daily commute in Bangalore.',
-    company: 'Kumar Transport',
-    postedDate: '5 days ago',
-    applicantCount: 3,
-  },
-  {
-    id: '4',
-    title: 'Nanny',
-    location: 'Chennai',
-    salary: '₹9,000/month',
-    type: 'Full-time',
-    requirements: 'Experience in childcare and early childhood education',
-    description: 'Looking for a nurturing nanny for a family in Chennai.',
-    company: 'Desai Household',
-    postedDate: '2 days ago',
-    applicantCount: 6,
-  },
-  {
-    id: '5',
-    title: 'Gardener',
-    location: 'Hyderabad',
-    salary: '₹8,000/month',
-    type: 'Part-time',
-    requirements: 'Skilled in garden maintenance and landscaping',
-    description: 'Experienced gardener needed for a private estate in Hyderabad.',
-    company: 'Singh Estate',
-    postedDate: '4 days ago',
-    applicantCount: 4,
-  },
-];
-
 const JobListings = ({ navigation }) => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
-  // Use sampleJobs as initial state instead of empty array
-  const [jobs, setJobs] = useState<JobType[]>(sampleJobs);
-  const [filteredJobs, setFilteredJobs] = useState<JobType[]>(sampleJobs);
-  // Set loading to false since we're using sample data
-  const [loading, setLoading] = useState(false);
+  const [jobs, setJobs] = useState<JobType[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<JobType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Uncomment below if you want to fetch from Firestore
-  /*
   useEffect(() => {
     fetchJobListings();
   }, []);
 
-  // Fetch Jobs from Firestore
+  // Fetch Jobs from Firestore using your JobService
   const fetchJobListings = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, "jobListings"));
-      const jobList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        description: doc.data().description || 'Looking for an experienced professional to join our team.',
-        company: doc.data().company || 'Private Employer',
-        postedDate: doc.data().postedDate || '2 days ago',
-        applicantCount: doc.data().applicantCount || Math.floor(Math.random() * 20),
-      })) as JobType[];
+      setLoading(true);
+      const response = await JobService.getJobListings();
+      
+      if (response.success) {
+        // Format job data to match our UI requirements
+        const jobList = response.jobs.map((job) => ({
+          id: job.id,
+          title: job.title || 'Untitled Position',
+          location: job.location || 'Remote',
+          salary: job.salary || 'Competitive',
+          type: job.type || 'Full-time',
+          requirements: job.requirements || 'No specific requirements listed',
+          employerId: job.employerId || '',
+          description: job.description || 'Looking for an experienced professional to join our team.',
+          company: job.company || 'Private Employer',
+          // Format date if available
+          postedDate: job.createdAt ? formatPostedDate(job.createdAt.toDate()) : 'Recently posted',
+          applicantCount: job.applicantCount || Math.floor(Math.random() * 10),
+        }));
 
-      setJobs(jobList);
-      setFilteredJobs(jobList);
-      setLoading(false);
-      console.log("✅ Jobs Fetched Successfully:", jobList);
+        setJobs(jobList);
+        setFilteredJobs(jobList);
+        console.log("✅ Jobs Fetched Successfully:", jobList);
+      } else {
+        // If the fetch failed, use sample data as fallback
+        setJobs(sampleJobs);
+        setFilteredJobs(sampleJobs);
+        console.warn("⚠️ Using sample data due to fetch error");
+      }
     } catch (error) {
       console.error("❌ Error fetching jobs:", error);
+      // Use sample data as fallback
+      setJobs(sampleJobs);
+      setFilteredJobs(sampleJobs);
+    } finally {
       setLoading(false);
     }
   };
-  */
+
+  // Helper function to format the posted date
+  const formatPostedDate = (date) => {
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays <= 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays <= 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -192,6 +162,70 @@ const JobListings = ({ navigation }) => {
   const handleSaveJob = (job: JobType) => {
     alert(`Job saved!`);
   };
+
+  // Sample job postings as fallback
+  const sampleJobs: JobType[] = [
+    {
+      id: '1',
+      title: 'House Maid',
+      location: 'Mumbai',
+      salary: '₹10,000/month',
+      type: 'Full-time',
+      requirements: 'Experience in cleaning, cooking, and laundry',
+      description: 'Looking for an experienced house maid for a busy family in Mumbai.',
+      company: 'Sharma Family',
+      postedDate: '3 days ago',
+      applicantCount: 5,
+    },
+    {
+      id: '2',
+      title: 'Cook',
+      location: 'Delhi',
+      salary: '₹12,000/month',
+      type: 'Part-time',
+      requirements: 'Expert in Indian cuisine and dietary restrictions',
+      description: 'We need a skilled cook to prepare healthy meals in Delhi.',
+      company: 'Verma Home',
+      postedDate: '1 day ago',
+      applicantCount: 8,
+    },
+    {
+      id: '3',
+      title: 'Driver',
+      location: 'Bangalore',
+      salary: '₹15,000/month',
+      type: 'Full-time',
+      requirements: 'Clean driving record and knowledge of local routes',
+      description: 'Reliable driver required for daily commute in Bangalore.',
+      company: 'Kumar Transport',
+      postedDate: '5 days ago',
+      applicantCount: 3,
+    },
+    {
+      id: '4',
+      title: 'Nanny',
+      location: 'Chennai',
+      salary: '₹9,000/month',
+      type: 'Full-time',
+      requirements: 'Experience in childcare and early childhood education',
+      description: 'Looking for a nurturing nanny for a family in Chennai.',
+      company: 'Desai Household',
+      postedDate: '2 days ago',
+      applicantCount: 6,
+    },
+    {
+      id: '5',
+      title: 'Gardener',
+      location: 'Hyderabad',
+      salary: '₹8,000/month',
+      type: 'Part-time',
+      requirements: 'Skilled in garden maintenance and landscaping',
+      description: 'Experienced gardener needed for a private estate in Hyderabad.',
+      company: 'Singh Estate',
+      postedDate: '4 days ago',
+      applicantCount: 4,
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -325,7 +359,7 @@ const JobListings = ({ navigation }) => {
                       </View>
                       <View style={styles.detailItem}>
                         <IconButton icon="clock-outline" size={18} color="#0D47A1" style={styles.detailIcon} />
-                        <Text style={styles.detailText}>{item.type}</Text>
+                        <Text style={styles.detailText}>{item.type || 'Full-time'}</Text>
                       </View>
                     </View>
                     
